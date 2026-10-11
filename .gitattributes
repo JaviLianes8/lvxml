@@ -1,1 +1,3 @@
 * text=auto eol=lf
+# Fixtures are kept byte for byte as LabVIEW wrote them, CRLF line breaks included.
+tests/fixtures/** -text

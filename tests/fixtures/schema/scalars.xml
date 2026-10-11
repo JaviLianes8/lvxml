@@ -1,0 +1,24 @@
+<?xml version='1.0' standalone='yes' ?>
+<LVData xmlns="http://www.ni.com/LVData">
+  <Version>26.3.1f1</Version>
+  <I8><Name>i8</Name><Val>-128</Val></I8>
+  <I16><Name>i16</Name><Val>32767</Val></I16>
+  <I32><Name>i32</Name><Val>-2147483648</Val></I32>
+  <I64><Name>i64</Name><Val>9223372036854775807</Val></I64>
+  <U8><Name>u8</Name><Val>255</Val></U8>
+  <U16><Name>u16</Name><Val>65535</Val></U16>
+  <U32><Name>u32</Name><Val>4294967295</Val></U32>
+  <U64><Name>u64</Name><Val>18446744073709551615</Val></U64>
+  <SGL><Name>sgl</Name><Val>1.50000</Val></SGL>
+  <DBL><Name>dbl</Name><Val>-2.50000000000000E+3</Val></DBL>
+  <EXT><Name>ext</Name><Val>0.333333333333333333</Val></EXT>
+  <CSG><Name>csg</Name><Val>1.00000 +-2.00000 i</Val></CSG>
+  <CDB><Name>cdb</Name><Val>0.50000000000000 +0.25000000000000 i</Val></CDB>
+  <CXT><Name>cxt</Name><Val>3.0 +4.0 i</Val></CXT>
+  <Boolean><Name>on</Name><Val>1</Val></Boolean>
+  <Boolean><Name>off</Name><Val>0</Val></Boolean>
+  <Path><Name>path</Name><Val>C:\data\run 1.tdms</Val></Path>
+  <String><Name>text</Name><Val>a &lt;b&gt; &amp; "c" 'd'</Val></String>
+  <String><Name>empty</Name><Val></Val></String>
+  <DAQChannel><Name>channel</Name><Val>Dev1/ai0</Val></DAQChannel>
+</LVData>
