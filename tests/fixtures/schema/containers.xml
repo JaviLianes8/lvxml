@@ -1,0 +1,62 @@
+<?xml version='1.0' standalone='yes' ?>
+<LVData xmlns="http://www.ni.com/LVData">
+  <Array>
+    <Name>grid</Name>
+    <Dimsize>2</Dimsize>
+    <Dimsize>3</Dimsize>
+    <I32><Name></Name><Val>1</Val></I32>
+    <I32><Name></Name><Val>2</Val></I32>
+    <I32><Name></Name><Val>3</Val></I32>
+    <I32><Name></Name><Val>4</Val></I32>
+    <I32><Name></Name><Val>5</Val></I32>
+    <I32><Name></Name><Val>6</Val></I32>
+  </Array>
+  <Array>
+    <Name>none</Name>
+    <Dimsize>0</Dimsize>
+    <DBL><Name>Numeric</Name><Val>0.00000000000000</Val></DBL>
+  </Array>
+  <Array>
+    <Name>records</Name>
+    <Dimsize>1</Dimsize>
+    <Cluster>
+      <Name>record</Name>
+      <NumElts>2</NumElts>
+      <String><Name>id</Name><Val>r1</Val></String>
+      <Array><Name>flags</Name><Dimsize>2</Dimsize><Boolean><Name></Name><Val>1</Val></Boolean><Boolean><Name></Name><Val>0</Val></Boolean></Array>
+    </Cluster>
+  </Array>
+  <Cluster>
+    <Name>outer</Name>
+    <NumElts>2</NumElts>
+    <Cluster><Name>inner</Name><NumElts>1</NumElts><U8><Name>b</Name><Val>7</Val></U8></Cluster>
+    <EW><Name>pick</Name><Choice>A</Choice><Choice>B</Choice><Val>0</Val></EW>
+  </Cluster>
+  <LvVariant><Name>variant</Name><DBL><Name>x</Name><Val>1.0</Val></DBL></LvVariant>
+  <LvVariant><Name>empty variant</Name></LvVariant>
+  <Timestamp>
+    <Name>when</Name>
+    <Cluster><Name></Name><NumElts>2</NumElts><I64><Name>seconds</Name><Val>3786825600</Val></I64><U64><Name>fraction</Name><Val>0</Val></U64></Cluster>
+  </Timestamp>
+  <WDT><Name>wdt</Name></WDT>
+  <DynamicData><Name>dynamic</Name><Cluster><Name></Name><NumElts>0</NumElts></Cluster></DynamicData>
+  <DigitalData><Name>digital</Name></DigitalData>
+  <DigitalWaveform><Name>digital wave</Name></DigitalWaveform>
+  <DBLWaveform>
+    <Name>wave</Name>
+    <Cluster><Name></Name><NumElts>2</NumElts><DBL><Name>dt</Name><Val>0.001</Val></DBL><Array><Name>Y</Name><Dimsize>2</Dimsize><DBL><Name></Name><Val>0.5</Val></DBL><DBL><Name></Name><Val>-0.5</Val></DBL></Array></Cluster>
+  </DBLWaveform>
+  <SGLWaveform><Name>sgl wave</Name></SGLWaveform>
+  <EXTWaveform><Name>ext wave</Name></EXTWaveform>
+  <I8Waveform><Name>i8 wave</Name></I8Waveform>
+  <I16Waveform><Name>i16 wave</Name></I16Waveform>
+  <I32Waveform><Name>i32 wave</Name></I32Waveform>
+  <I64Waveform><Name>i64 wave</Name></I64Waveform>
+  <U8Waveform><Name>u8 wave</Name></U8Waveform>
+  <U16Waveform><Name>u16 wave</Name></U16Waveform>
+  <U32Waveform><Name>u32 wave</Name></U32Waveform>
+  <U64Waveform><Name>u64 wave</Name></U64Waveform>
+  <CSGWaveform><Name>csg wave</Name></CSGWaveform>
+  <CDBWaveform><Name>cdb wave</Name></CDBWaveform>
+  <CXTWaveform><Name>cxt wave</Name></CXTWaveform>
+</LVData>

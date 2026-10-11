@@ -1,0 +1,12 @@
+<Cluster>
+<Name>pt</Name>
+<NumElts>2</NumElts>
+<DBL>
+<Name>x</Name>
+<Val>1.25000000000000</Val>
+</DBL>
+<I32>
+<Name>y</Name>
+<Val>-5</Val>
+</I32>
+</Cluster>

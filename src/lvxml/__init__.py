@@ -2,11 +2,31 @@
 
 from __future__ import annotations
 
-from ._decode import from_lv_xml
-from ._encode import to_lv_xml
+from ._checks import validate
+from ._decode import from_lv_xml, from_lv_xml_all, to_value
+from ._dump import dump
+from ._encode import to_lv_xml, to_node
 from ._errors import LVXMLError
-from ._schema import Array, Cluster
+from ._node import LVDATA_NAMESPACE, Document, Node
+from ._parse import parse
+from ._schema import Array, Cluster, LVEnum
 
-__version__ = "0.1.0"
+__version__ = "0.2.0"
 
-__all__ = ["Array", "Cluster", "LVXMLError", "from_lv_xml", "to_lv_xml"]
+__all__ = [
+    "LVDATA_NAMESPACE",
+    "Array",
+    "Cluster",
+    "Document",
+    "LVEnum",
+    "LVXMLError",
+    "Node",
+    "dump",
+    "from_lv_xml",
+    "from_lv_xml_all",
+    "parse",
+    "to_lv_xml",
+    "to_node",
+    "to_value",
+    "validate",
+]

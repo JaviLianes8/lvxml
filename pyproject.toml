@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "lvxml"
-version = "0.1.0"
+version = "0.2.0"
 description = "Codec for LabVIEW Flatten To XML / Unflatten From XML between its fixed schema and native Python values"
 readme = "README.md"
 requires-python = ">=3.10"
@@ -14,14 +14,22 @@ authors = [{ name = "Javier Lianes", email = "javier@lianes8studio.com" }]
 keywords = ["labview", "xml", "codec", "flatten", "unflatten", "ni"]
 classifiers = [
     "Development Status :: 4 - Beta",
+    "Environment :: Console",
     "Intended Audience :: Developers",
+    "Intended Audience :: Science/Research",
+    "Topic :: Scientific/Engineering",
     "Programming Language :: Python :: 3",
     "Typing :: Typed",
 ]
 dependencies = []
 
 [project.optional-dependencies]
-dev = ["ruff", "mypy", "pytest", "build", "twine"]
+# lxml validates fixtures against LabVIEW's XSD in the tests; hatchling lets the end-to-end
+# test install the package in editable mode without network access (with editables).
+dev = ["ruff", "mypy", "pytest", "build", "twine", "lxml", "hatchling", "editables"]
+
+[project.scripts]
+lvxml = "lvxml._cli:main"
 
 [project.urls]
 Homepage = "https://lianes8studio.com"

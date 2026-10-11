@@ -1,124 +1,109 @@
-"""Turn LabVIEW Flatten-To-XML text into native Python values."""
+"""Turn LabVIEW Flatten-To-XML text, or a parsed tree, into native Python values."""
 
 from __future__ import annotations
 
-from xml.etree import ElementTree as ET
-
+from ._checks import child_path, problems
 from ._errors import LVXMLError
-from ._schema import FLOAT_TAGS, INT_RANGES, Value
+from ._node import Node
+from ._numbers import parse_bool, parse_complex, parse_float, parse_int
+from ._parse import parse
+from ._schema import COMPLEX_TAGS, ENUM_RANGES, FLOAT_TAGS, INT_RANGES, Value
+from ._treejson import check_shape
 
 
-def from_lv_xml(text: str) -> Value:
-    """Parse one LabVIEW flattened-XML element into a Python value."""
+def from_lv_xml(text: str | bytes) -> Value:
+    """Parse LabVIEW flattened XML into the Python value of its first value element.
+
+    Inside an ``<LVData>`` file wrapper the ``<Version>`` header is skipped; use
+    `from_lv_xml_all` when the file holds several values.
+    """
+    document = parse(text)
+    if not document.values:
+        raise LVXMLError("<LVData> holds no value")
+    root = "LVData" if document.wrapped else ""
+    return _value(document.values[0], root)
+
+
+def from_lv_xml_all(text: str | bytes) -> list[Value]:
+    """Parse LabVIEW flattened XML into the Python values of every value element, in order."""
+    document = parse(text)
+    root = "LVData" if document.wrapped else ""
+    return [_value(node, root) for node in document.values]
+
+
+def to_value(node: Node) -> Value:
+    """Convert one typed `Node` into its Python value.
+
+    Integers become ``int``, ``SGL``/``DBL``/``EXT`` ``float``, ``CSG``/``CDB``/``CXT``
+    ``complex``, ``Boolean`` ``bool``; ``String``, ``Path``, ``DAQChannel`` and a
+    ``Refnum``'s ``<Val>`` stay ``str``; an enum becomes its selected choice label. An
+    ``Array`` becomes a list, nested once per dimension, and a ``Cluster`` a dict keyed by
+    field name. ``LvVariant``, ``Timestamp``, ``WDT``, ``DynamicData``, ``DigitalData``
+    and the waveform elements become the list of their items' values.
+    """
+    check_shape(node, "")
     try:
-        root = ET.fromstring(text)
-    except ET.ParseError as exc:
-        raise LVXMLError(f"invalid XML: {exc}") from exc
-    return _decode(_unwrap(root))
+        return _value(node, "")
+    except RecursionError:
+        raise LVXMLError("the tree is nested too deeply to convert") from None
 
 
-def _local(tag: str) -> str:
-    return tag.rsplit("}", 1)[-1]
-
-
-def _unwrap(element: ET.Element) -> ET.Element:
-    if _local(element.tag) != "LVData":
-        return element
-    for child in element:
-        if _local(child.tag) != "Version":
-            return child
-    raise LVXMLError("<LVData> holds no value")
-
-
-def _decode(element: ET.Element) -> Value:
-    tag = _local(element.tag)
-    if tag == "Cluster":
-        return _decode_cluster(element)
-    if tag == "Array":
-        return _decode_array(element)
+def _value(node: Node, parent: str) -> Value:
+    path = child_path(parent, node)
+    found = problems(node)
+    if found:
+        raise LVXMLError(found[0], path)
+    tag, text = node.tag, node.val if node.val is not None else ""
     if tag in FLOAT_TAGS:
-        return _to_float(element)
+        return parse_float(text)
+    if tag in COMPLEX_TAGS:
+        return parse_complex(text)
     if tag in INT_RANGES:
-        return _to_int(element)
+        return parse_int(text, tag)
     if tag == "Boolean":
-        return _to_bool(element)
-    if tag == "String":
-        return _val_text(element)
-    raise LVXMLError(f"unknown LabVIEW type tag <{tag}>")
+        return parse_bool(text)
+    if tag in ENUM_RANGES:
+        return node.choices[parse_int(text, tag)]
+    if tag == "Array":
+        return _array(node, path)
+    if tag == "Cluster":
+        return _cluster(node, path)
+    if node.items or node.val is None:
+        return [_value(item, path) for item in node.items]
+    return text
 
 
-def _val_text(element: ET.Element) -> str:
-    for child in element:
-        if _local(child.tag) == "Val":
-            return child.text or ""
-    raise LVXMLError(f"<{_local(element.tag)}> has no <Val>")
-
-
-def _name_of(element: ET.Element) -> str:
-    for child in element:
-        if _local(child.tag) == "Name":
-            return child.text or ""
-    return ""
-
-
-def _to_float(element: ET.Element) -> float:
-    raw = _val_text(element)
-    try:
-        return float(raw)
-    except ValueError as exc:
-        raise LVXMLError(f"invalid float value {raw!r}") from exc
-
-
-def _to_int(element: ET.Element) -> int:
-    raw = _val_text(element)
-    try:
-        return int(raw, 10)
-    except ValueError as exc:
-        raise LVXMLError(f"invalid integer value {raw!r}") from exc
-
-
-def _to_bool(element: ET.Element) -> bool:
-    raw = _val_text(element).strip().lower()
-    if raw in {"1", "true"}:
-        return True
-    if raw in {"0", "false"}:
-        return False
-    raise LVXMLError(f"invalid boolean value {raw!r}")
-
-
-def _decode_cluster(element: ET.Element) -> dict[str, Value]:
+def _cluster(node: Node, path: str) -> dict[str, Value]:
     fields: dict[str, Value] = {}
-    for child in element:
-        if _local(child.tag) in {"Name", "NumElts"}:
-            continue
-        fields[_name_of(child)] = _decode(child)
+    for item in node.items:
+        if item.name in fields:
+            raise LVXMLError(
+                f"duplicate field name {item.name!r} cannot map to a dict; "
+                "use lvxml.parse for positional access",
+                path,
+            )
+        fields[item.name] = _value(item, path)
     return fields
 
 
-def _decode_array(element: ET.Element) -> list[Value]:
-    dimsize: int | None = None
-    items: list[Value] = []
-    for child in element:
-        name = _local(child.tag)
-        if name == "Name":
-            continue
-        if name == "Dimsize":
-            if dimsize is not None:
-                raise LVXMLError("multi-dimensional arrays are not supported")
-            dimsize = _dim(child)
-            continue
-        items.append(_decode(child))
-    if dimsize is None:
-        raise LVXMLError("<Array> has no <Dimsize>")
-    if dimsize == 0:
+def _array(node: Node, path: str) -> list[Value]:
+    dims = node.dims
+    if 0 in dims:
+        for item in node.items:
+            _value(item, path)  # the default element must still be a valid value
+        return _empty(dims)
+    flat = [_value(item, path) for item in node.items]
+    return _reshape(flat, dims)
+
+
+def _empty(dims: tuple[int, ...]) -> list[Value]:
+    if dims[0] == 0 or len(dims) == 1:
         return []
-    if len(items) != dimsize:
-        raise LVXMLError(f"array Dimsize {dimsize} does not match {len(items)} elements")
-    return items
+    return [_empty(dims[1:]) for _ in range(dims[0])]
 
 
-def _dim(element: ET.Element) -> int:
-    try:
-        return int(element.text or "0", 10)
-    except ValueError as exc:
-        raise LVXMLError(f"invalid Dimsize {element.text!r}") from exc
+def _reshape(flat: list[Value], dims: tuple[int, ...]) -> list[Value]:
+    if len(dims) == 1:
+        return flat
+    step = len(flat) // dims[0]
+    return [_reshape(flat[i * step : (i + 1) * step], dims[1:]) for i in range(dims[0])]

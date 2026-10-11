@@ -1,0 +1,30 @@
+<?xml version='1.0' standalone='yes' ?>
+<LVData xmlns="http://www.ni.com/LVData">
+  <EB><Name>mode</Name><Choice>Off</Choice><Choice>On</Choice><Val>1</Val></EB>
+  <EW>
+    <Name>state</Name>
+    <Choice>Idle</Choice>
+    <Choice>Run</Choice>
+    <Choice>Stop</Choice>
+    <Val>2</Val>
+  </EW>
+  <EL><Name>level</Name><Choice>Low</Choice><Val>0</Val></EL>
+  <Refnum><Name>plain</Name><Val>0x00000000</Val></Refnum>
+  <Refnum>
+    <Name>queue</Name>
+    <Val>0x12345678</Val>
+    <RefKind>Queue</RefKind>
+    <RefType>Generic</RefType>
+  </Refnum>
+  <Refnum>
+    <Name>activex</Name>
+    <Val>0x00000001</Val>
+    <ActiveXType><GUID>{00000000-0000-0000-0000-000000000000}</GUID><Name>Thing</Name></ActiveXType>
+  </Refnum>
+  <Refnum>
+    <Name>dotnet</Name>
+    <Val>0x00000002</Val>
+    <RefKind>.NET Refnum</RefKind>
+    <DotNetType><Name>System.Object</Name></DotNetType>
+  </Refnum>
+</LVData>
