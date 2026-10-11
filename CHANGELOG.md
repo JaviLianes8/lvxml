@@ -27,13 +27,21 @@ All notable changes to this project are documented here. The format follows
 ### Changed
 
 - The reader enforces the schema's element order and rejects unknown elements, stray
-  text, attributes, a missing `<Name>` and a DOCTYPE.
-- `NumElts` and `Dimsize` must match the elements present; a comma decimal separator,
-  an out-of-range integer or duplicate cluster field names now raise instead of being
-  read silently.
+  text, attributes, a missing `<Name>`, elements outside the root's namespace, a DOCTYPE
+  and CDATA sections. Nesting deeper than 100 levels raises.
+- `NumElts` must match the elements present, a `Cluster`'s `NumElts` is no longer
+  ignored, and an integer outside its type's range or duplicate cluster field names now
+  raise instead of being read silently. A comma decimal separator still raises, now with
+  a hint.
+- Bytes input is decoded by the encoding its XML declaration names (UTF-8 by default);
+  any other input type raises `TypeError`.
+- Error messages start with the location of the offending element.
+- Floats are read strictly: digits with an optional period and exponent, or `NaN`,
+  `Inf` and `Infinity` in any case. Python-only spellings such as `1_000` raise.
 - `to_lv_xml` writes empty elements as `<Name></Name>`, like LabVIEW, and non-finite
-  floats as `NaN`, `Inf` and `-Inf`. An `Array` element can no longer be an `Array`,
-  which the schema does not allow.
+  floats as `NaN`, `Inf` and `-Inf`. A `SGL` or `CSG` value too large for single
+  precision raises. An `Array` element can no longer be an `Array`, which the schema
+  does not allow.
 
 ## [0.1.0]
 

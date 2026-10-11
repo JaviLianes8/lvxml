@@ -36,7 +36,7 @@ with open("Example Flattened XML File.xml", encoding="utf-8") as f:
 | --- | --- |
 | `I8` `I16` `I32` `I64` `U8` `U16` `U32` `U64` | `int`, range checked |
 | `SGL` `DBL` `EXT` | `float` (`NaN`, `Inf`, `-Inf` accepted) |
-| `CSG` `CDB` `CXT` | `complex`, from LabVIEW's `re +im i` text |
+| `CSG` `CDB` `CXT` | `complex`, from `re +im i` text |
 | `Boolean` | `bool` (`1`/`0`, also `true`/`false`) |
 | `String` `Path` `DAQChannel` | `str` |
 | `EB` `EW` `EL` enums | the selected `<Choice>` label |
@@ -103,8 +103,12 @@ bare, the way Flatten To XML returns it, and refuses a node the schema cannot ex
 checks the element structure `LVXMLSchema.xsd` defines, then every value: numbers that
 parse and fit their type, enum indexes inside their choices, and `NumElts` and `Dimsize`
 that match the elements present. Each problem names its location, such as
-`Cluster[pt]/I8[y]: 300 is out of range for I8 (-128..127)`. Every error raised is an
-`LVXMLError` (a `ValueError`) with the same `path` attribute.
+`Cluster[pt]/I8[y]: 300 is out of range for I8 (-128..127)`. Problems in the data raise
+`LVXMLError` (a `ValueError`) with the same location in its `path` attribute. Building an
+impossible schema object, such as `LVEnum(())`, raises `ValueError` or `TypeError`.
+
+`parse`, `from_lv_xml`, `from_lv_xml_all` and `validate` take `str` or `bytes`; bytes are
+decoded by the encoding the XML declaration names, or as UTF-8.
 
 ## Command line
 
@@ -116,24 +120,48 @@ lvxml validate data.xml other.xml        # check shape and values, exit 1 on any
 echo "<I32><Name>n</Name><Val>7</Val></I32>" | lvxml to-json --values -
 ```
 
-`-` reads standard input. `--encoding` sets the file encoding (default `utf-8`; LabVIEW
-on Windows writes non-ASCII text in the system code page, so try `--encoding cp1252`).
-`to-xml --newline lf` switches from CRLF. With `--values`, complex numbers become
-`{"re": ..., "im": ...}`. Errors go to standard error with exit status 1. `lvxml --help`
-lists everything.
+`-` reads standard input. `--encoding` sets the file encoding (default `utf-8`); if a
+file is not UTF-8, name its encoding, for example `--encoding cp1252`.
+`to-xml --newline lf` switches from CRLF. `--values` writes strict JSON: complex numbers
+become `{"re": ..., "im": ...}` and non-finite floats the strings `"NaN"`, `"Inf"` and
+`"-Inf"`. Errors go to standard error with exit status 1. `lvxml --help` lists
+everything.
 
-## Details that match LabVIEW
+## What each rule rests on
 
-- Only `&`, `<` and `>` are escaped, as LabVIEW does; quotes are written as they are.
-- Decimals always use a period, regardless of locale. A comma decimal raises.
-- Floats are written with the shortest text that reads back exactly; non-finite values
-  as `NaN`, `Inf` and `-Inf`.
-- Carriage returns inside a string value survive a read; a plain XML parser would turn
-  them into line feeds.
-- A DOCTYPE is refused: LabVIEW never writes one.
-- LabVIEW's file writer puts `xmlns="http://www.ni.com/LVData"` on `<LVData>`, while the
-  shipped XSD declares the target namespace `http://www.ni.com/labview`. The reader
-  accepts either, or none, and keeps whichever it found.
+Checked against the real LabVIEW file in the tests:
+
+- The layout `dump` writes by default: the `<?xml version='1.0' standalone='yes' ?>`
+  declaration, `<LVData xmlns="http://www.ni.com/LVData">`, a `<Version>` header, one
+  element per line, CRLF, no indentation and no final line break.
+- `DBL`, `Cluster` and one-dimensional `Array` values, and decimals written with a period.
+
+Checked against the shipped XSD: the element structure of every type, including
+multi-dimensional `Array` (repeated `<Dimsize>`), the enum `<Choice>` list and the
+optional `Refnum` fields. The XSD declares the target namespace
+`http://www.ni.com/labview` while the real file uses `http://www.ni.com/LVData`; the
+reader accepts either, or none, keeps whichever it found, and requires every element to
+share the root's namespace.
+
+Taken from the format strings in LabVIEW 2026's run-time library (`lvrt.dll`), with no
+real sample in the tests yet:
+
+- complex values as `re +im i` (the writer's `<Val>%s +%s i</Val>`);
+- only `&`, `<` and `>` escaped in text (the only entity strings beside the XML
+  writer's tags are `&lt;`, `&gt;` and `&amp;`), so quotes are written as they are;
+- integers and `Dimsize` as plain decimals (`%d`, `%lld`, `%llu`).
+
+Choices `lvxml` makes where neither source settles the question:
+
+- `Boolean` is written as `1` or `0`; the reader also accepts `true` and `false`.
+- Non-finite floats are written as `NaN`, `Inf` and `-Inf` (the spellings found in the
+  run-time library) and read case-insensitively.
+- Floats are written with the shortest text that reads back exactly. A comma decimal
+  separator raises.
+- A carriage return inside a value is written as is and survives a read with `lvxml`,
+  where a plain XML parser would turn it into a line feed.
+- A DOCTYPE or a CDATA section is refused, nesting deeper than 100 levels raises, and an
+  empty array whose shape would expand to more than 100000 nested lists raises.
 
 ## Test fixtures
 
@@ -160,7 +188,8 @@ on the real file.
 ## Not covered
 
 Fixed-point `FXP` numbers and the `<Default>` and `<Attributes>` children of a variant
-are absent from the shipped schema, so the reader raises a clear error for them. The
+appear among the run-time library's writer strings but are absent from the shipped
+schema, so the reader raises a clear error for them. The
 timestamp and waveform elements are read as the schema describes them (a name and
 clusters), not interpreted further.
 

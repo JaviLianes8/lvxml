@@ -2,7 +2,8 @@
 
 Ranked by how much each one changes what a user can trust or do. Every type and element
 named here traces to `LVXMLSchema.xsd` as shipped in `vi.lib\Utility` of LabVIEW 2026, or
-to a file LabVIEW itself wrote.
+to a file LabVIEW itself wrote; value text forms that neither settles are listed under
+"Deferred".
 
 1. **Ground truth in the test suite.** Ship the official `LVXMLSchema.xsd` and a file
    written by LabVIEW 2026 (the "Flatten and Unflatten XML" example) as fixtures. A
@@ -28,12 +29,17 @@ to a file LabVIEW itself wrote.
    value, for use in tooling and the CLI.
 7. **CLI.** `lvxml to-json`, `lvxml to-xml` and `lvxml validate`, with `--version`,
    runnable `--help` examples, errors on stderr and exit status 1.
-8. **Escaping and line endings.** Only `&`, `<` and `>` are escaped, as LabVIEW does.
-   Carriage returns inside string values survive a read, where a plain XML parser would
-   fold them into line feeds.
+8. **Escaping and line endings.** Only `&`, `<` and `>` are escaped, matching the entity
+   strings beside the XML writer in LabVIEW's run-time library. Carriage returns inside
+   string values survive a read, where a plain XML parser would fold them into line feeds.
 9. **Real end-to-end test.** Installs the package in editable mode and drives the
    installed `lvxml` console script on the real file, with no mocks.
+10. **Hardening.** Bounded nesting depth and empty-array expansion, CDATA and DOCTYPE
+    refused, every element required to share the root's namespace, and bytes input decoded
+    by its XML declaration.
 
-Deferred: fixed-point `FXP` and the `<Default>`/`<Attributes>` children of a variant are
-written by recent LabVIEW versions but are absent from the shipped schema, so they raise
-a clear error until a real sample is available to test against.
+Deferred: fixed-point `FXP` and the `<Default>`/`<Attributes>` children of a variant
+appear among the writer strings of LabVIEW's run-time library but are absent from the
+shipped schema, so they raise a clear error until a real sample is available to test
+against. The same goes for real samples of complex, Boolean, enum and non-finite values:
+their text forms rest on the run-time library or on choices this library documents.
