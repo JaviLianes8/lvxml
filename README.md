@@ -68,11 +68,14 @@ extended-precision `EXT` and complex (`CDB`/`CSG`/`CXT`) numerics, fixed-point `
 
 LabVIEW's Flatten To XML and Unflatten From XML use one fixed schema
 (`LVXMLSchema.xsd`): datatype-named elements, `Name`-ordered fields, a period decimal
-separator independent of locale. A generic XML library parses the tree but knows nothing of
-that convention, so turning it into usable Python, or producing XML LabVIEW will accept,
-is left to hand-written glue every time. Existing LabVIEW Python packages (pylabview,
-lvkit, autolv) parse VI source files, not this flattened data format, and no package on
-PyPI covers it. `lvxml` is a small, typed, zero-dependency codec for the common types.
+separator independent of locale. LabVIEW produces and reads this schema natively, and NI's
+community GXML library also converts data to and from XML, but both run inside LabVIEW and
+ship no Python reader. On the Python side, with no LabVIEW running, a generic XML library
+parses the tree but knows nothing of that convention, so turning it into usable Python, or
+producing XML LabVIEW will accept, is left to hand-written glue every time. Existing LabVIEW
+Python packages (pylabview, lvkit, autolv) parse VI source files, not this flattened data
+format, and no package on PyPI covers it. `lvxml` is a small, typed, zero-dependency codec
+for the common types.
 
 ## License
 
