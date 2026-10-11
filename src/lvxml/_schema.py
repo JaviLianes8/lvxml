@@ -94,6 +94,9 @@ class LVEnum:
     tag: str = "EW"
 
     def __post_init__(self) -> None:
+        if isinstance(self.choices, str) or not all(isinstance(c, str) for c in self.choices):
+            raise TypeError("LVEnum choices must be a sequence of str labels, not one str")
+        object.__setattr__(self, "choices", tuple(self.choices))
         if self.tag not in ENUM_RANGES:
             raise ValueError(f"LVEnum tag must be EB, EW or EL, got {self.tag!r}")
         if not self.choices:

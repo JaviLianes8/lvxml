@@ -11,15 +11,16 @@ from ._schema import ENUM_RANGES, INT_RANGES
 # A period is the only decimal separator: LabVIEW does not localize this format.
 _FLOAT = re.compile(r"[+-]?(\d+\.?\d*|\.\d+)([eE][+-]?\d+)?")
 _NON_FINITE = {"nan": math.nan, "inf": math.inf, "+inf": math.inf, "-inf": -math.inf}
+_NON_FINITE.update({"infinity": math.inf, "+infinity": math.inf, "-infinity": -math.inf})
 _INT = re.compile(r"[+-]?\d+")
-# LabVIEW writes a complex value as "<re> +<im> i".
+# LabVIEW's run-time library formats a complex value as "<re> +<im> i".
 _COMPLEX = re.compile(r"\s*(\S+)\s*\+\s*(\S+)\s*i\s*")
 _TRUE = frozenset({"1", "true"})
 _FALSE = frozenset({"0", "false"})
 
 
 def parse_float(text: str) -> float:
-    """Parse a LabVIEW float, including the NaN, Inf and -Inf spellings."""
+    """Parse a float with a period decimal point; NaN, Inf and Infinity in any case."""
     stripped = text.strip()
     if stripped.lower() in _NON_FINITE:
         return _NON_FINITE[stripped.lower()]

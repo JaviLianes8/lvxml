@@ -5,6 +5,7 @@ from __future__ import annotations
 import argparse
 import codecs
 import json
+import math
 import sys
 from collections.abc import Sequence
 from typing import NoReturn
@@ -15,6 +16,7 @@ from ._decode import to_value
 from ._dump import dump
 from ._errors import LVXMLError
 from ._node import Document
+from ._numbers import format_float
 from ._parse import parse
 
 EXAMPLES = """\
@@ -77,7 +79,11 @@ def _read(path: str, encoding: str) -> str:
 
 
 def _write(text: str, output: str | None, encoding: str) -> None:
-    data = text.encode(encoding)
+    try:
+        data = text.encode(encoding)
+    except UnicodeEncodeError as exc:
+        bad = exc.object[exc.start : exc.end]
+        raise LVXMLError(f"{bad!r} cannot be written as {encoding}; try --encoding utf-8") from exc
     if output is None:
         sys.stdout.buffer.write(data)
         sys.stdout.buffer.flush()
@@ -86,10 +92,17 @@ def _write(text: str, output: str | None, encoding: str) -> None:
             handle.write(data)
 
 
-def _json_value(value: object) -> object:
+def _plain(value: object) -> object:
+    """Make a value strict JSON: complex as {"re", "im"}, NaN and Inf as strings."""
+    if isinstance(value, float) and not math.isfinite(value):
+        return format_float(value, "DBL")
     if isinstance(value, complex):
-        return {"re": value.real, "im": value.imag}
-    raise TypeError(f"cannot represent {type(value).__name__} in JSON")
+        return {"re": _plain(value.real), "im": _plain(value.imag)}
+    if isinstance(value, list):
+        return [_plain(item) for item in value]
+    if isinstance(value, dict):
+        return {key: _plain(item) for key, item in value.items()}
+    return value
 
 
 def _to_json(args: argparse.Namespace) -> int:
@@ -99,12 +112,12 @@ def _to_json(args: argparse.Namespace) -> int:
         if found:
             raise LVXMLError(found[0])
         data: object = [
-            {"name": node.name, "type": node.tag, "value": to_value(node)}
+            {"name": node.name, "type": node.tag, "value": _plain(to_value(node))}
             for node in document.values
         ]
     else:
         data = document.to_dict()
-    text = json.dumps(data, indent=2, ensure_ascii=False, default=_json_value) + "\n"
+    text = json.dumps(data, indent=2, ensure_ascii=False, allow_nan=False) + "\n"
     _write(text, args.output, "utf-8")
     return 0
 
@@ -148,4 +161,7 @@ def main(argv: Sequence[str] | None = None) -> int:
         return handlers[args.command](args)
     except (LVXMLError, OSError) as exc:
         print(f"lvxml: error: {exc}", file=sys.stderr)
+        return 1
+    except RecursionError:
+        print("lvxml: error: the input is nested too deeply", file=sys.stderr)
         return 1

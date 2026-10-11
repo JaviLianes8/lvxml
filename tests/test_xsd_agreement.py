@@ -28,6 +28,10 @@ XSD_INVALID = {
     "dotnet without name": "<Refnum><Name>r</Name><Val>0</Val><DotNetType></DotNetType></Refnum>",
     "stray text": "<Cluster><Name>c</Name>oops<NumElts>0</NumElts></Cluster>",
     "attribute": '<DBL unit="V"><Name>x</Name><Val>1</Val></DBL>',
+    "child in another namespace": (
+        "<Cluster><Name>c</Name><NumElts>1</NumElts>"
+        '<I8 xmlns="urn:other"><Name>a</Name><Val>1</Val></I8></Cluster>'
+    ),
     "child inside val": "<String><Name>s</Name><Val><b>x</b></Val></String>",
 }
 

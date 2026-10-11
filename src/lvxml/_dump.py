@@ -12,7 +12,7 @@ from ._treejson import check_shape
 DECLARATION = "<?xml version='1.0' standalone='yes' ?>"
 
 # Characters XML 1.0 cannot carry at all, even escaped.
-_ILLEGAL = re.compile("[\x00-\x08\x0b\x0c\x0e-\x1f\ufffe\uffff]")
+_ILLEGAL = re.compile("[\x00-\x08\x0b\x0c\x0e-\x1f\ud800-\udfff\ufffe\uffff]")
 
 
 def dump(
@@ -24,11 +24,11 @@ def dump(
 ) -> str:
     """Serialize a `Document` or a single `Node` as LabVIEW XML.
 
-    The defaults reproduce LabVIEW's file writer: one element per line, CRLF line breaks,
-    no indentation, empty elements written as ``<Name></Name>``, only ``&``, ``<`` and
-    ``>`` escaped, and no line break after the last element. `declaration` defaults to
-    true for an ``<LVData>`` document and false otherwise. A `Node` is written bare, as
-    Flatten To XML outputs it.
+    The defaults reproduce the layout of a file LabVIEW 2026 wrote: one element per line,
+    CRLF line breaks, no indentation, empty elements written as ``<Name></Name>`` and no
+    line break after the last element. Only ``&``, ``<`` and ``>`` are escaped.
+    `declaration` defaults to true for an ``<LVData>`` document and false otherwise. A
+    `Node` is written bare, as Flatten To XML outputs it.
     """
     document = tree if isinstance(tree, Document) else Document((tree,), False, None)
     if not document.wrapped and len(document.items) != 1:
@@ -39,7 +39,10 @@ def dump(
             if node != Node("Version", val=node.val) or node.val is None:
                 raise LVXMLError("a Version node only takes a val", root)
         else:
-            check_shape(node, root)
+            try:
+                check_shape(node, root)
+            except RecursionError:
+                raise LVXMLError("the tree is nested too deeply to write", root) from None
     lines: list[str] = []
     if declaration if declaration is not None else document.wrapped:
         lines.append(DECLARATION)

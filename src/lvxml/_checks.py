@@ -11,6 +11,10 @@ from ._numbers import parse_bool, parse_complex, parse_float, parse_int
 from ._parse import parse
 from ._schema import COMPLEX_TAGS, ENUM_RANGES, FLOAT_TAGS, INT_RANGES
 
+# An empty array with leading non-zero sizes (such as 1000x0) decodes to nested empty lists;
+# more than this many is refused so a tiny input cannot demand unbounded memory.
+MAX_EMPTY_ROWS = 100_000
+
 
 def problems(node: Node) -> list[str]:
     """Return what is wrong with `node` itself, not looking inside its items."""
@@ -24,6 +28,8 @@ def problems(node: Node) -> list[str]:
         count = len(node.items)
         if total == 0 and count > 1:
             found.append(f"array Dimsize {_dims(node)} is empty but holds {count} elements")
+        if total == 0 and _empty_rows(node.dims) > MAX_EMPTY_ROWS:
+            found.append(f"empty array Dimsize {_dims(node)} needs over {MAX_EMPTY_ROWS} lists")
         elif total and count != total:
             found.append(f"array Dimsize {_dims(node)} needs {total} elements, found {count}")
         tags = {item.tag for item in node.items}
@@ -32,6 +38,18 @@ def problems(node: Node) -> list[str]:
     if node.tag == "Cluster" and node.num_elts != len(node.items):
         found.append(f"cluster NumElts {node.num_elts} does not match {len(node.items)} elements")
     return found
+
+
+def _empty_rows(dims: tuple[int, ...]) -> int:
+    rows, prefix = 0, 1
+    for dim in dims[:-1]:
+        if dim == 0:
+            break
+        prefix *= dim
+        rows += prefix
+        if rows > MAX_EMPTY_ROWS:
+            break
+    return rows
 
 
 def _dims(node: Node) -> str:
@@ -67,7 +85,7 @@ def walk(node: Node, parent: str) -> Iterator[tuple[str, Node]]:
         yield from walk(item, path)
 
 
-def validate(text: str) -> list[str]:
+def validate(text: str | bytes) -> list[str]:
     """Return every problem found in LabVIEW XML `text`; an empty list means it is valid.
 
     A document that does not have the shape LVXMLSchema.xsd defines yields one problem,

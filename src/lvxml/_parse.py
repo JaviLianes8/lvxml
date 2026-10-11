@@ -2,10 +2,10 @@
 
 from __future__ import annotations
 
-import re
 from xml.etree import ElementTree as ET
 
 from ._errors import LVXMLError
+from ._load import decode, load
 from ._node import Document, Node
 from ._schema import (
     ARRAY_ITEM_TAGS,
@@ -15,16 +15,24 @@ from ._schema import (
     VALUE_TAGS,
 )
 
-_MARKUP = re.compile(r"(<[^>]*>)")
+# Deeper nesting than this is refused rather than exhausting the interpreter's stack.
+MAX_DEPTH = 100
 
 
-def parse(text: str) -> Document:
-    """Parse LabVIEW Flatten-To-XML text, bare or inside ``<LVData>``, into a `Document`."""
-    root = _load(text)
+def parse(text: str | bytes) -> Document:
+    """Parse LabVIEW Flatten-To-XML, bare or inside ``<LVData>``, into a `Document`.
+
+    Bytes are decoded by the encoding their XML declaration names, or as UTF-8.
+    """
+    root = load(decode(text))
     tag, namespace = _split(root.tag)
+    for element in root.iter():
+        if _split(element.tag)[1] != namespace:
+            where = _split(element.tag)[0]
+            raise LVXMLError(f"<{where}> is not in the root element's namespace {namespace!r}")
     _no_attributes(root, tag)
     if tag != "LVData":
-        return Document((_node(root, VALUE_TAGS, ""),), wrapped=False, namespace=namespace)
+        return Document((_node(root, VALUE_TAGS, "", 1),), wrapped=False, namespace=namespace)
     _no_text(root.text, "LVData")
     items: list[Node] = []
     for child in root:
@@ -32,32 +40,8 @@ def parse(text: str) -> Document:
         if _split(child.tag)[0] == "Version":
             items.append(Node("Version", val=_leaf(child, "LVData/Version")))
         else:
-            items.append(_node(child, VALUE_TAGS, "LVData"))
+            items.append(_node(child, VALUE_TAGS, "LVData", 1))
     return Document(tuple(items), wrapped=True, namespace=namespace)
-
-
-def _load(text: str) -> ET.Element:
-    if "<!DOCTYPE" in text:
-        raise LVXMLError("a DOCTYPE is not part of LabVIEW XML")
-    try:
-        return ET.fromstring(_keep_carriage_returns(text))
-    except ET.ParseError as exc:
-        raise LVXMLError(f"invalid XML: {exc}") from exc
-
-
-def _keep_carriage_returns(text: str) -> str:
-    """Encode CRs inside the root element so the parser does not fold them into LFs."""
-    if "\r" not in text:
-        return text
-    parts = _MARKUP.split(text)
-    tags = [i for i in range(1, len(parts), 2) if not parts[i].startswith(("<?", "<!"))]
-    if not tags:
-        return text
-    first, last = tags[0], tags[-1]
-    return "".join(
-        part.replace("\r", "&#13;") if first < i < last and i % 2 == 0 else part
-        for i, part in enumerate(parts)
-    )
 
 
 def _split(tag: str) -> tuple[str, str | None]:
@@ -87,8 +71,9 @@ def _leaf(element: ET.Element, path: str) -> str:
 class _Children:
     """Walk an element's children in order, as the schema's xsd:sequence requires."""
 
-    def __init__(self, element: ET.Element, path: str) -> None:
+    def __init__(self, element: ET.Element, path: str, depth: int = 0) -> None:
         _no_text(element.text, path)
+        self.depth = depth
         self.kids = list(element)
         for kid in self.kids:
             _no_text(kid.tail, path)
@@ -112,7 +97,7 @@ class _Children:
         return values
 
     def rest(self, allowed: frozenset[str]) -> tuple[Node, ...]:
-        nodes = tuple(_node(kid, allowed, self.path) for kid in self.kids[self.pos :])
+        nodes = tuple(_node(k, allowed, self.path, self.depth + 1) for k in self.kids[self.pos :])
         self.pos = len(self.kids)
         return nodes
 
@@ -121,14 +106,16 @@ class _Children:
             raise LVXMLError(f"unexpected <{self.peek()}>", self.path)
 
 
-def _node(element: ET.Element, allowed: frozenset[str], parent: str) -> Node:
+def _node(element: ET.Element, allowed: frozenset[str], parent: str, depth: int) -> Node:
     tag = _split(element.tag)[0]
     here = f"{parent}/{tag}" if parent else tag
+    if depth > MAX_DEPTH:
+        raise LVXMLError(f"nesting deeper than {MAX_DEPTH} levels is not supported", here)
     if tag not in allowed:
         where = f"inside <{parent.rsplit('/', 1)[-1]}>" if parent else "as a root element"
         raise LVXMLError(f"<{tag}> is not allowed {where} by LVXMLSchema.xsd", here)
     _no_attributes(element, here)
-    kids = _Children(element, here)
+    kids = _Children(element, here, depth)
     name = kids.take("Name")
     kids.path = f"{here}[{name}]" if name else here
     node = _body(tag, name, kids)

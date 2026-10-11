@@ -3,7 +3,8 @@
 from __future__ import annotations
 
 from ._errors import LVXMLError
-from ._node import Document, Node
+from ._node import LVDATA_NAMESPACE, Document, Node
+from ._parse import MAX_DEPTH
 from ._schema import ARRAY_ITEM_TAGS, CLUSTERED_TAGS, ENUM_RANGES, SIMPLE_TAGS, VALUE_TAGS
 
 _EXTRA_ORDER = ("RefKind", "RefType", "ActiveXType.GUID", "ActiveXType.Name", "DotNetType.Name")
@@ -11,16 +12,20 @@ _NEEDS = {"RefType": "RefKind", "ActiveXType.Name": "ActiveXType.GUID"}
 _FIELDS = ("name", "val", "choices", "dims", "num_elts", "items", "extra")
 
 
-def check_shape(node: Node, path: str) -> None:
+def check_shape(node: Node, path: str, depth: int = 1) -> None:
     """Raise unless `node` only uses the parts LVXMLSchema.xsd gives its tag."""
     tag = node.tag
     here = f"{path}/{tag}" if path else tag
+    if depth > MAX_DEPTH:
+        raise LVXMLError(f"nesting deeper than {MAX_DEPTH} levels is not supported", path)
     if tag not in VALUE_TAGS:
         raise LVXMLError(f"unknown LabVIEW type tag {tag!r}", here)
     used = {f for f in _FIELDS[1:] if getattr(node, f) not in (None, ())}
     allowed = _allowed(tag)
     if used - allowed or (allowed & {"val", "num_elts", "dims", "choices"}) - used:
         raise LVXMLError(f"<{tag}> takes {sorted(allowed)}, got {sorted(used)}", here)
+    if (node.num_elts or 0) < 0 or any(dim < 0 for dim in node.dims):
+        raise LVXMLError("NumElts and Dimsize cannot be negative", here)
     keys = [key for key, _ in node.extra]
     order = [_EXTRA_ORDER.index(k) if k in _EXTRA_ORDER else -1 for k in keys]
     if -1 in order or order != sorted(set(order)):
@@ -32,7 +37,7 @@ def check_shape(node: Node, path: str) -> None:
     for item in node.items:
         if item.tag not in members:
             raise LVXMLError(f"<{item.tag}> is not allowed inside <{tag}>", here)
-        check_shape(item, here)
+        check_shape(item, here, depth + 1)
 
 
 def _allowed(tag: str) -> set[str]:
@@ -96,7 +101,9 @@ def _strings(value: object, key: str, path: str) -> tuple[str, ...]:
     return tuple(str(item) for item in items)
 
 
-def node_from_dict(data: object, path: str) -> Node:
+def node_from_dict(data: object, path: str, depth: int = 1) -> Node:
+    if depth > MAX_DEPTH:
+        raise LVXMLError(f"nesting deeper than {MAX_DEPTH} levels is not supported", path)
     if not isinstance(data, dict):
         raise LVXMLError("a node must be an object", path)
     unknown = set(data) - {"tag", *_FIELDS}
@@ -106,6 +113,8 @@ def node_from_dict(data: object, path: str) -> Node:
     if not isinstance(tag, str):
         raise LVXMLError("a node needs a string 'tag'", path)
     here = f"{path}/{tag}" if path else tag
+    if tag != "Version" and "name" not in data:
+        raise LVXMLError("a node needs a 'name' (use \"\" for an unnamed one)", here)
     dims = _get(data, "dims", list, here) or []
     assert isinstance(dims, list)
     if not all(isinstance(d, int) and not isinstance(d, bool) and d >= 0 for d in dims):
@@ -126,7 +135,7 @@ def node_from_dict(data: object, path: str) -> Node:
         choices=_strings(_get(data, "choices", list, here), "choices", here),
         dims=tuple(int(d) for d in dims),
         num_elts=num_elts if isinstance(num_elts, int) else None,
-        items=tuple(node_from_dict(item, here) for item in items),
+        items=tuple(node_from_dict(item, here, depth + 1) for item in items),
         extra=tuple((pair[0], pair[1]) for pair in pairs),
     )
 
@@ -134,7 +143,10 @@ def node_from_dict(data: object, path: str) -> Node:
 def document_from_dict(data: object) -> Document:
     if not isinstance(data, dict) or not isinstance(data.get("items"), list):
         raise LVXMLError("a document must be an object with an 'items' list")
-    wrapped, namespace = data.get("wrapped", True), data.get("namespace")
+    unknown = set(data) - {"wrapped", "namespace", "items"}
+    if unknown:
+        raise LVXMLError(f"unknown document fields {sorted(unknown)}")
+    wrapped, namespace = data.get("wrapped", True), data.get("namespace", LVDATA_NAMESPACE)
     if not isinstance(wrapped, bool) or not (namespace is None or isinstance(namespace, str)):
         raise LVXMLError("'wrapped' must be a bool and 'namespace' a string or null")
     root = "LVData" if wrapped else ""

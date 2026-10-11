@@ -26,7 +26,10 @@ def to_lv_xml(value: Value, schema: Schema, name: str = "") -> str:
 
 def to_node(value: Value, schema: Schema, name: str = "") -> Node:
     """Build the typed `Node` for `value` under `schema`, checking every type and range."""
-    return _encode(value, schema, name, name or "value")
+    try:
+        return _encode(value, schema, name, name or "value")
+    except RecursionError:
+        raise LVXMLError("the value is nested too deeply to write") from None
 
 
 def _encode(value: Value, schema: Schema, name: str, path: str) -> Node:
@@ -34,6 +37,9 @@ def _encode(value: Value, schema: Schema, name: str, path: str) -> Node:
         return _encode_array(value, schema, name, path)
     if isinstance(schema, Cluster):
         return _encode_cluster(value, schema, name, path)
+    if not isinstance(schema, (str, LVEnum)):
+        kind = type(schema).__name__
+        raise TypeError(f"a schema is a tag string, Array, Cluster or LVEnum, not {kind}")
     if isinstance(schema, LVEnum):
         return Node(
             schema.tag, name, val=str(_enum_index(value, schema, path)), choices=schema.choices

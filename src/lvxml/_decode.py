@@ -8,9 +8,10 @@ from ._node import Node
 from ._numbers import parse_bool, parse_complex, parse_float, parse_int
 from ._parse import parse
 from ._schema import COMPLEX_TAGS, ENUM_RANGES, FLOAT_TAGS, INT_RANGES, Value
+from ._treejson import check_shape
 
 
-def from_lv_xml(text: str) -> Value:
+def from_lv_xml(text: str | bytes) -> Value:
     """Parse LabVIEW flattened XML into the Python value of its first value element.
 
     Inside an ``<LVData>`` file wrapper the ``<Version>`` header is skipped; use
@@ -23,7 +24,7 @@ def from_lv_xml(text: str) -> Value:
     return _value(document.values[0], root)
 
 
-def from_lv_xml_all(text: str) -> list[Value]:
+def from_lv_xml_all(text: str | bytes) -> list[Value]:
     """Parse LabVIEW flattened XML into the Python values of every value element, in order."""
     document = parse(text)
     root = "LVData" if document.wrapped else ""
@@ -40,7 +41,11 @@ def to_value(node: Node) -> Value:
     field name. ``LvVariant``, ``Timestamp``, ``WDT``, ``DynamicData``, ``DigitalData``
     and the waveform elements become the list of their items' values.
     """
-    return _value(node, "")
+    check_shape(node, "")
+    try:
+        return _value(node, "")
+    except RecursionError:
+        raise LVXMLError("the tree is nested too deeply to convert") from None
 
 
 def _value(node: Node, parent: str) -> Value:
@@ -84,6 +89,8 @@ def _cluster(node: Node, path: str) -> dict[str, Value]:
 def _array(node: Node, path: str) -> list[Value]:
     dims = node.dims
     if 0 in dims:
+        for item in node.items:
+            _value(item, path)  # the default element must still be a valid value
         return _empty(dims)
     flat = [_value(item, path) for item in node.items]
     return _reshape(flat, dims)
