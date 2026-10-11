@@ -97,7 +97,7 @@ def test_missing_val_raises() -> None:
         from_lv_xml("<DBL><Name>x</Name></DBL>")
 
 
-def test_multidimensional_array_raises() -> None:
+def test_array_with_fewer_elements_than_its_dimsizes_raises() -> None:
     xml = "<Array><Name>m</Name><Dimsize>1</Dimsize><Dimsize>1</Dimsize></Array>"
     with pytest.raises(LVXMLError):
         from_lv_xml(xml)
