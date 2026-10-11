@@ -6,6 +6,35 @@ All notable changes to this project are documented here. The format follows
 
 ## [Unreleased]
 
+## [0.2.0]
+
+### Added
+
+- Every element of LabVIEW's `LVXMLSchema.xsd`: `EXT`, complex `CSG`/`CDB`/`CXT`, `Path`,
+  `DAQChannel`, the `EB`/`EW`/`EL` enums, `Refnum`, `LvVariant`, `Timestamp`, `WDT`,
+  `DynamicData`, `DigitalData` and every waveform element.
+- Multi-dimensional arrays: nested lists in row-major order, `Array(element, ndim=2)`.
+- `LVEnum(choices, tag)` schema; enum values encode from a label or an index.
+- Lossless typed tree: `parse`, `dump`, `Node`, `Document`, `to_node`, `to_value`, and
+  dict conversion with `to_dict`/`from_dict`. LabVIEW-written files round-trip byte for
+  byte.
+- `from_lv_xml_all` for files holding several values.
+- `validate`, which lists every problem with its location.
+- `lvxml` command with `to-json`, `to-xml` and `validate`, also as `python -m lvxml`.
+- `LVXMLError.path` locating the offending element.
+- Tests against the official XSD and a file written by LabVIEW 2026.
+
+### Changed
+
+- The reader enforces the schema's element order and rejects unknown elements, stray
+  text, attributes, a missing `<Name>` and a DOCTYPE.
+- `NumElts` and `Dimsize` must match the elements present; a comma decimal separator,
+  an out-of-range integer or duplicate cluster field names now raise instead of being
+  read silently.
+- `to_lv_xml` writes empty elements as `<Name></Name>`, like LabVIEW, and non-finite
+  floats as `NaN`, `Inf` and `-Inf`. An `Array` element can no longer be an `Array`,
+  which the schema does not allow.
+
 ## [0.1.0]
 
 - First release.
