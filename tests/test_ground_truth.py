@@ -8,7 +8,7 @@ from xml.etree import ElementTree as ET
 
 import pytest
 from conftest import REAL_FILES, SCHEMA_FILES, XSD, read
-from xsd_check import xsd_valid, xsd_valid_raw
+from xsd_check import requires_xsd, xsd_valid, xsd_valid_raw
 
 import lvxml
 from lvxml._schema import VALUE_TAGS, Value
@@ -32,6 +32,7 @@ def test_the_real_file_carries_labview_headers() -> None:
     assert lvxml.parse(raw.decode("utf-8")).version == "26.3.1f1"
 
 
+@requires_xsd
 def test_the_codec_knows_exactly_the_value_elements_the_xsd_defines() -> None:
     schema = ET.parse(XSD).getroot()
     xs = "{http://www.w3.org/2001/XMLSchema}"
@@ -42,6 +43,7 @@ def test_the_codec_knows_exactly_the_value_elements_the_xsd_defines() -> None:
     assert declared == set(VALUE_TAGS)
 
 
+@requires_xsd
 @pytest.mark.parametrize("path", ALL_FILES, ids=lambda p: p.name)
 def test_every_fixture_is_valid_against_the_xsd(path: Path) -> None:
     assert xsd_valid(read(path))
@@ -71,7 +73,12 @@ def test_every_fixture_round_trips_canonically(path: Path) -> None:
     written = lvxml.dump(lvxml.parse(raw))
     assert _canonical(written) == _canonical(raw)
     assert lvxml.parse(written) == lvxml.parse(raw)
-    assert xsd_valid(written)
+
+
+@requires_xsd
+@pytest.mark.parametrize("path", ALL_FILES, ids=lambda p: p.name)
+def test_every_rewritten_fixture_is_valid_against_the_xsd(path: Path) -> None:
+    assert xsd_valid(lvxml.dump(lvxml.parse(read(path))))
 
 
 @pytest.mark.parametrize("path", ALL_FILES, ids=lambda p: p.name)
@@ -95,11 +102,13 @@ def test_real_file_values() -> None:
     assert max(samples) == values[0]  # type: ignore[type-var]
 
 
+@requires_xsd
 def test_real_file_needs_the_namespace_mapping_to_meet_the_xsd() -> None:
     # LabVIEW writes xmlns="http://www.ni.com/LVData"; the XSD targets another namespace.
     assert not xsd_valid_raw(read(REAL_FILES[0]))
 
 
+@requires_xsd
 def test_encoded_values_are_valid_against_the_xsd() -> None:
     schema = lvxml.Cluster(
         {

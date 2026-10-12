@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import pytest
-from xsd_check import xsd_valid
+from xsd_check import requires_xsd, xsd_valid
 
 import lvxml
 
@@ -63,11 +63,22 @@ XSD_VALID_BUT_INCONSISTENT = {
 
 
 @pytest.mark.parametrize("text", XSD_INVALID.values(), ids=list(XSD_INVALID))
-def test_xsd_and_reader_both_reject(text: str) -> None:
-    assert not xsd_valid(text)
+def test_reader_rejects_what_the_xsd_rejects(text: str) -> None:
     with pytest.raises(lvxml.LVXMLError):
         lvxml.parse(text)
     assert len(lvxml.validate(text)) == 1
+
+
+@requires_xsd
+@pytest.mark.parametrize("text", XSD_INVALID.values(), ids=list(XSD_INVALID))
+def test_the_xsd_rejects_each_invalid_sample(text: str) -> None:
+    assert not xsd_valid(text)
+
+
+@requires_xsd
+@pytest.mark.parametrize("text", [t for t, _ in XSD_VALID_BUT_INCONSISTENT.values()])
+def test_the_xsd_accepts_each_inconsistent_sample(text: str) -> None:
+    assert xsd_valid(text)
 
 
 @pytest.mark.parametrize(
@@ -76,7 +87,6 @@ def test_xsd_and_reader_both_reject(text: str) -> None:
     ids=list(XSD_VALID_BUT_INCONSISTENT),
 )
 def test_consistency_checks_go_beyond_the_xsd(text: str, message: str) -> None:
-    assert xsd_valid(text)
     lvxml.parse(text)
     problems = lvxml.validate(text)
     assert len(problems) == 1
