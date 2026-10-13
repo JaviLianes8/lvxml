@@ -1,0 +1,11 @@
+{
+  "LVXMLSchema.xsd": {
+    "title": "LabVIEW XML schema for Flatten To XML / Unflatten From XML",
+    "origin": "C:\Program Files\National Instruments\LabVIEW 2026\vi.lib\Utility\LVXMLSchema.xsd",
+    "labview": "LabVIEW 2026 (26.3.1f1)",
+    "licence": "NI proprietary, installed with LabVIEW; not redistributed",
+    "retrieved": "2026-10-13",
+    "size": 21250,
+    "sha256": "f33d8c217caa008ebebb35d66a78bda5770d5f620407d5b9963fa1da48bc41ad"
+  }
+}

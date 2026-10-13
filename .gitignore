@@ -10,3 +10,7 @@ dist/
 .ruff_cache/
 .coverage
 htmlcov/
+
+# NI's schema, copied from a local LabVIEW install by scripts/capture_ni.py; only the manifest is tracked.
+tests/fixtures/ni/*
+!tests/fixtures/ni/MANIFEST.json

@@ -167,8 +167,12 @@ Choices `lvxml` makes where neither source settles the question:
 
 The tests check the codec against ground truth from a LabVIEW 2026 installation:
 
-- `tests/fixtures/LVXMLSchema.xsd` is the schema LabVIEW ships, copied unchanged from
+- `LVXMLSchema.xsd` is the schema LabVIEW ships in
   `C:\Program Files\National Instruments\LabVIEW 2026\vi.lib\Utility\LVXMLSchema.xsd`.
+  It belongs to NI, so it is not in the repository or the sdist: run
+  `python scripts/capture_ni.py` on a machine with LabVIEW to copy it into
+  `tests/fixtures/ni` (size and sha256 are checked against `tests/fixtures/ni/MANIFEST.json`).
+  Without it, the tests that validate against the schema skip.
 - `tests/fixtures/real/example-flattened-xml-file.xml` is **real LabVIEW output**,
   kept byte for byte: the file `Example Flattened XML File.xml` that LabVIEW 2026
   (version header `26.3.1f1`) wrote to `Documents\LabVIEW Data` when running the shipped
@@ -180,7 +184,7 @@ The tests check the codec against ground truth from a LabVIEW 2026 installation:
   are not LabVIEW's actual internal layout, which the schema does not specify.
 
 The real file and every schema-derived fixture are validated against the XSD with `lxml`
-(a test-only dependency), parsed, decoded, and written back: the real file byte for byte,
+(a test-only dependency) when the schema is present, parsed, decoded, and written back: the real file byte for byte,
 the others canonically equal. Samples that the XSD rejects are rejected by the reader as
 well. An end-to-end test installs the package and drives the installed `lvxml` command
 on the real file.

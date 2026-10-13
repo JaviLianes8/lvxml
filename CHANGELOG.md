@@ -6,6 +6,14 @@ All notable changes to this project are documented here. The format follows
 
 ## [Unreleased]
 
+## [0.2.1]
+
+### Changed
+
+- NI's `LVXMLSchema.xsd` is no longer tracked or shipped in the sdist. `scripts/capture_ni.py`
+  copies it from a local LabVIEW install into `tests/fixtures/ni` (checked against the tracked
+  manifest), and the tests that validate against it skip when it is absent.
+
 ## [0.2.0]
 
 ### Added
