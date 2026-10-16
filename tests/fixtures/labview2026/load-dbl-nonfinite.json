@@ -1,0 +1,8 @@
+{
+  "job": "load-dbl-nonfinite",
+  "finished": true,
+  "Max": "Infinity",
+  "Min": "-Infinity",
+  "Mean": "NaN",
+  "Retrieved XML": "<DBL>\r\n<Name></Name>\r\n<Val>Inf</Val>\r\n</DBL>\r\n<DBL>\r\n<Name>Min</Name>\r\n<Val>-Inf</Val>\r\n</DBL>\r\n<DBL>\r\n<Name>mean</Name>\r\n<Val>NaN</Val>\r\n</DBL>\r\n<Cluster>\r\n<Name>Random Graph Data</Name>\r\n<NumElts>3</NumElts>\r\n<DBL>\r\n<Name>Initial X</Name>\r\n<Val>0</Val>\r\n</DBL>\r\n<DBL>\r\n<Name>Delta X</Name>\r\n<Val>0.25</Val>\r\n</DBL>\r\n<Array>\r\n<Name>Values</Name>\r\n<Dimsize>1</Dimsize>\r\n<DBL>\r\n<Name>Numeric</Name>\r\n<Val>1</Val>\r\n</DBL>\r\n</Array>\r\n</Cluster>\r\n"
+}

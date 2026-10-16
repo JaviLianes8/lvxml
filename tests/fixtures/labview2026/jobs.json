@@ -1,0 +1,669 @@
+[
+  {
+    "name": "save-cont-escapes",
+    "kind": "save",
+    "vi": "C:\\Program Files\\National Instruments\\LabVIEW 2026\\ProjectTemplates\\Source\\Core\\Continuous Measurement\\Settings\\Save Settings to XML.vi",
+    "control": "Settings",
+    "value": {
+      "t": "cluster",
+      "v": [
+        {
+          "t": "cluster",
+          "v": [
+            {
+              "t": "str",
+              "v": "a&b<c>d \"q\" 'p' ]]> tab\tend cr\rlf\ncrlf\r\nx "
+            },
+            {
+              "t": "u16",
+              "v": 1
+            }
+          ]
+        },
+        {
+          "t": "cluster",
+          "v": [
+            {
+              "t": "str",
+              "v": "C:\\d\\a&b<c>.tdms"
+            },
+            {
+              "t": "i32",
+              "v": 0
+            }
+          ]
+        }
+      ]
+    },
+    "file": "C:\\Program Files\\National Instruments\\LabVIEW 2026\\ProjectTemplates\\Source\\Core\\Continuous Measurement\\Settings\\Settings.xml",
+    "out": "save-cont-escapes.xml"
+  },
+  {
+    "name": "save-cont-paths",
+    "kind": "save",
+    "vi": "C:\\Program Files\\National Instruments\\LabVIEW 2026\\ProjectTemplates\\Source\\Core\\Continuous Measurement\\Settings\\Save Settings to XML.vi",
+    "control": "Settings",
+    "value": {
+      "t": "cluster",
+      "v": [
+        {
+          "t": "cluster",
+          "v": [
+            {
+              "t": "str",
+              "v": "  spaces  "
+            },
+            {
+              "t": "u16",
+              "v": 0
+            }
+          ]
+        },
+        {
+          "t": "cluster",
+          "v": [
+            {
+              "t": "str",
+              "v": "\\\\server\\share\\run 1.tdms"
+            },
+            {
+              "t": "i32",
+              "v": 0
+            }
+          ]
+        }
+      ]
+    },
+    "file": "C:\\Program Files\\National Instruments\\LabVIEW 2026\\ProjectTemplates\\Source\\Core\\Continuous Measurement\\Settings\\Settings.xml",
+    "out": "save-cont-paths.xml"
+  },
+  {
+    "name": "save-cont-relative",
+    "kind": "save",
+    "vi": "C:\\Program Files\\National Instruments\\LabVIEW 2026\\ProjectTemplates\\Source\\Core\\Continuous Measurement\\Settings\\Save Settings to XML.vi",
+    "control": "Settings",
+    "value": {
+      "t": "cluster",
+      "v": [
+        {
+          "t": "cluster",
+          "v": [
+            {
+              "t": "str",
+              "v": ""
+            },
+            {
+              "t": "u16",
+              "v": 1
+            }
+          ]
+        },
+        {
+          "t": "cluster",
+          "v": [
+            {
+              "t": "str",
+              "v": "sub\\file.tdms"
+            },
+            {
+              "t": "i32",
+              "v": 0
+            }
+          ]
+        }
+      ]
+    },
+    "file": "C:\\Program Files\\National Instruments\\LabVIEW 2026\\ProjectTemplates\\Source\\Core\\Continuous Measurement\\Settings\\Settings.xml",
+    "out": "save-cont-relative.xml"
+  },
+  {
+    "name": "save-cont-codepage",
+    "kind": "save",
+    "vi": "C:\\Program Files\\National Instruments\\LabVIEW 2026\\ProjectTemplates\\Source\\Core\\Continuous Measurement\\Settings\\Save Settings to XML.vi",
+    "control": "Settings",
+    "value": {
+      "t": "cluster",
+      "v": [
+        {
+          "t": "cluster",
+          "v": [
+            {
+              "t": "str",
+              "v": "caf\u00e9 \u20ac5"
+            },
+            {
+              "t": "u16",
+              "v": 0
+            }
+          ]
+        },
+        {
+          "t": "cluster",
+          "v": [
+            {
+              "t": "str",
+              "v": "C:\\caf\u00e9.tdms"
+            },
+            {
+              "t": "i32",
+              "v": 0
+            }
+          ]
+        }
+      ]
+    },
+    "file": "C:\\Program Files\\National Instruments\\LabVIEW 2026\\ProjectTemplates\\Source\\Core\\Continuous Measurement\\Settings\\Settings.xml",
+    "out": "save-cont-codepage.xml"
+  },
+  {
+    "name": "save-cont-control",
+    "kind": "save",
+    "vi": "C:\\Program Files\\National Instruments\\LabVIEW 2026\\ProjectTemplates\\Source\\Core\\Continuous Measurement\\Settings\\Save Settings to XML.vi",
+    "control": "Settings",
+    "value": {
+      "t": "cluster",
+      "v": [
+        {
+          "t": "cluster",
+          "v": [
+            {
+              "t": "str",
+              "v": "bell\u0007 unit\u001f"
+            },
+            {
+              "t": "u16",
+              "v": 0
+            }
+          ]
+        },
+        {
+          "t": "cluster",
+          "v": [
+            {
+              "t": "str",
+              "v": ""
+            },
+            {
+              "t": "i32",
+              "v": 0
+            }
+          ]
+        }
+      ]
+    },
+    "file": "C:\\Program Files\\National Instruments\\LabVIEW 2026\\ProjectTemplates\\Source\\Core\\Continuous Measurement\\Settings\\Settings.xml",
+    "out": "save-cont-control.xml"
+  },
+  {
+    "name": "save-single-false",
+    "kind": "save",
+    "vi": "C:\\Program Files\\National Instruments\\LabVIEW 2026\\ProjectTemplates\\Source\\Core\\Single Shot Measurement\\subVIs\\Save Configuration Settings to XML.vi",
+    "control": "User Configuration",
+    "value": {
+      "t": "cluster",
+      "v": [
+        {
+          "t": "cluster",
+          "v": [
+            {
+              "t": "str",
+              "v": "Dev1/ai0"
+            },
+            {
+              "t": "u16",
+              "v": 1
+            }
+          ]
+        },
+        {
+          "t": "cluster",
+          "v": [
+            {
+              "t": "bool",
+              "v": false
+            }
+          ]
+        },
+        {
+          "t": "u16",
+          "v": 2
+        }
+      ]
+    },
+    "file": "C:\\Program Files\\National Instruments\\LabVIEW 2026\\ProjectTemplates\\Source\\Core\\Single Shot Measurement\\subVIs\\Settings.xml",
+    "out": "save-single-false.xml"
+  },
+  {
+    "name": "save-single-true",
+    "kind": "save",
+    "vi": "C:\\Program Files\\National Instruments\\LabVIEW 2026\\ProjectTemplates\\Source\\Core\\Single Shot Measurement\\subVIs\\Save Configuration Settings to XML.vi",
+    "control": "User Configuration",
+    "value": {
+      "t": "cluster",
+      "v": [
+        {
+          "t": "cluster",
+          "v": [
+            {
+              "t": "str",
+              "v": "x"
+            },
+            {
+              "t": "u16",
+              "v": 0
+            }
+          ]
+        },
+        {
+          "t": "cluster",
+          "v": [
+            {
+              "t": "bool",
+              "v": true
+            }
+          ]
+        },
+        {
+          "t": "u16",
+          "v": 1
+        }
+      ]
+    },
+    "file": "C:\\Program Files\\National Instruments\\LabVIEW 2026\\ProjectTemplates\\Source\\Core\\Single Shot Measurement\\subVIs\\Settings.xml",
+    "out": "save-single-true.xml"
+  },
+  {
+    "name": "load-single-plain",
+    "kind": "load",
+    "vi": "C:\\Program Files\\National Instruments\\LabVIEW 2026\\ProjectTemplates\\Source\\Core\\Single Shot Measurement\\subVIs\\Load Configuration Settings from XML.vi",
+    "input": "inputs/load-single-plain.xml",
+    "file": "C:\\Program Files\\National Instruments\\LabVIEW 2026\\ProjectTemplates\\Source\\Core\\Single Shot Measurement\\subVIs\\Settings.xml",
+    "outputs": [
+      "User Configuration out",
+      "error out"
+    ],
+    "out": "load-single-plain.json"
+  },
+  {
+    "name": "load-single-bare",
+    "kind": "load",
+    "vi": "C:\\Program Files\\National Instruments\\LabVIEW 2026\\ProjectTemplates\\Source\\Core\\Single Shot Measurement\\subVIs\\Load Configuration Settings from XML.vi",
+    "input": "inputs/load-single-bare.xml",
+    "file": "C:\\Program Files\\National Instruments\\LabVIEW 2026\\ProjectTemplates\\Source\\Core\\Single Shot Measurement\\subVIs\\Settings.xml",
+    "outputs": [
+      "User Configuration out",
+      "error out"
+    ],
+    "out": "load-single-bare.json"
+  },
+  {
+    "name": "load-single-true-word",
+    "kind": "load",
+    "vi": "C:\\Program Files\\National Instruments\\LabVIEW 2026\\ProjectTemplates\\Source\\Core\\Single Shot Measurement\\subVIs\\Load Configuration Settings from XML.vi",
+    "input": "inputs/load-single-true-word.xml",
+    "file": "C:\\Program Files\\National Instruments\\LabVIEW 2026\\ProjectTemplates\\Source\\Core\\Single Shot Measurement\\subVIs\\Settings.xml",
+    "outputs": [
+      "User Configuration out",
+      "error out"
+    ],
+    "out": "load-single-true-word.json"
+  },
+  {
+    "name": "load-single-true-upper",
+    "kind": "load",
+    "vi": "C:\\Program Files\\National Instruments\\LabVIEW 2026\\ProjectTemplates\\Source\\Core\\Single Shot Measurement\\subVIs\\Load Configuration Settings from XML.vi",
+    "input": "inputs/load-single-true-upper.xml",
+    "file": "C:\\Program Files\\National Instruments\\LabVIEW 2026\\ProjectTemplates\\Source\\Core\\Single Shot Measurement\\subVIs\\Settings.xml",
+    "outputs": [
+      "User Configuration out",
+      "error out"
+    ],
+    "out": "load-single-true-upper.json"
+  },
+  {
+    "name": "load-single-bool-two",
+    "kind": "load",
+    "vi": "C:\\Program Files\\National Instruments\\LabVIEW 2026\\ProjectTemplates\\Source\\Core\\Single Shot Measurement\\subVIs\\Load Configuration Settings from XML.vi",
+    "input": "inputs/load-single-bool-two.xml",
+    "file": "C:\\Program Files\\National Instruments\\LabVIEW 2026\\ProjectTemplates\\Source\\Core\\Single Shot Measurement\\subVIs\\Settings.xml",
+    "outputs": [
+      "User Configuration out",
+      "error out"
+    ],
+    "out": "load-single-bool-two.json"
+  },
+  {
+    "name": "load-single-bool-space",
+    "kind": "load",
+    "vi": "C:\\Program Files\\National Instruments\\LabVIEW 2026\\ProjectTemplates\\Source\\Core\\Single Shot Measurement\\subVIs\\Load Configuration Settings from XML.vi",
+    "input": "inputs/load-single-bool-space.xml",
+    "file": "C:\\Program Files\\National Instruments\\LabVIEW 2026\\ProjectTemplates\\Source\\Core\\Single Shot Measurement\\subVIs\\Settings.xml",
+    "outputs": [
+      "User Configuration out",
+      "error out"
+    ],
+    "out": "load-single-bool-space.json"
+  },
+  {
+    "name": "load-single-enum-past",
+    "kind": "load",
+    "vi": "C:\\Program Files\\National Instruments\\LabVIEW 2026\\ProjectTemplates\\Source\\Core\\Single Shot Measurement\\subVIs\\Load Configuration Settings from XML.vi",
+    "input": "inputs/load-single-enum-past.xml",
+    "file": "C:\\Program Files\\National Instruments\\LabVIEW 2026\\ProjectTemplates\\Source\\Core\\Single Shot Measurement\\subVIs\\Settings.xml",
+    "outputs": [
+      "User Configuration out",
+      "error out"
+    ],
+    "out": "load-single-enum-past.json"
+  },
+  {
+    "name": "load-single-enum-negative",
+    "kind": "load",
+    "vi": "C:\\Program Files\\National Instruments\\LabVIEW 2026\\ProjectTemplates\\Source\\Core\\Single Shot Measurement\\subVIs\\Load Configuration Settings from XML.vi",
+    "input": "inputs/load-single-enum-negative.xml",
+    "file": "C:\\Program Files\\National Instruments\\LabVIEW 2026\\ProjectTemplates\\Source\\Core\\Single Shot Measurement\\subVIs\\Settings.xml",
+    "outputs": [
+      "User Configuration out",
+      "error out"
+    ],
+    "out": "load-single-enum-negative.json"
+  },
+  {
+    "name": "load-single-entities",
+    "kind": "load",
+    "vi": "C:\\Program Files\\National Instruments\\LabVIEW 2026\\ProjectTemplates\\Source\\Core\\Single Shot Measurement\\subVIs\\Load Configuration Settings from XML.vi",
+    "input": "inputs/load-single-entities.xml",
+    "file": "C:\\Program Files\\National Instruments\\LabVIEW 2026\\ProjectTemplates\\Source\\Core\\Single Shot Measurement\\subVIs\\Settings.xml",
+    "outputs": [
+      "User Configuration out",
+      "error out"
+    ],
+    "out": "load-single-entities.json"
+  },
+  {
+    "name": "load-single-crlf-text",
+    "kind": "load",
+    "vi": "C:\\Program Files\\National Instruments\\LabVIEW 2026\\ProjectTemplates\\Source\\Core\\Single Shot Measurement\\subVIs\\Load Configuration Settings from XML.vi",
+    "input": "inputs/load-single-crlf-text.xml",
+    "file": "C:\\Program Files\\National Instruments\\LabVIEW 2026\\ProjectTemplates\\Source\\Core\\Single Shot Measurement\\subVIs\\Settings.xml",
+    "outputs": [
+      "User Configuration out",
+      "error out"
+    ],
+    "out": "load-single-crlf-text.json"
+  },
+  {
+    "name": "load-single-xsd-namespace",
+    "kind": "load",
+    "vi": "C:\\Program Files\\National Instruments\\LabVIEW 2026\\ProjectTemplates\\Source\\Core\\Single Shot Measurement\\subVIs\\Load Configuration Settings from XML.vi",
+    "input": "inputs/load-single-xsd-namespace.xml",
+    "file": "C:\\Program Files\\National Instruments\\LabVIEW 2026\\ProjectTemplates\\Source\\Core\\Single Shot Measurement\\subVIs\\Settings.xml",
+    "outputs": [
+      "User Configuration out",
+      "error out"
+    ],
+    "out": "load-single-xsd-namespace.json"
+  },
+  {
+    "name": "load-single-no-namespace",
+    "kind": "load",
+    "vi": "C:\\Program Files\\National Instruments\\LabVIEW 2026\\ProjectTemplates\\Source\\Core\\Single Shot Measurement\\subVIs\\Load Configuration Settings from XML.vi",
+    "input": "inputs/load-single-no-namespace.xml",
+    "file": "C:\\Program Files\\National Instruments\\LabVIEW 2026\\ProjectTemplates\\Source\\Core\\Single Shot Measurement\\subVIs\\Settings.xml",
+    "outputs": [
+      "User Configuration out",
+      "error out"
+    ],
+    "out": "load-single-no-namespace.json"
+  },
+  {
+    "name": "load-single-indented",
+    "kind": "load",
+    "vi": "C:\\Program Files\\National Instruments\\LabVIEW 2026\\ProjectTemplates\\Source\\Core\\Single Shot Measurement\\subVIs\\Load Configuration Settings from XML.vi",
+    "input": "inputs/load-single-indented.xml",
+    "file": "C:\\Program Files\\National Instruments\\LabVIEW 2026\\ProjectTemplates\\Source\\Core\\Single Shot Measurement\\subVIs\\Settings.xml",
+    "outputs": [
+      "User Configuration out",
+      "error out"
+    ],
+    "out": "load-single-indented.json"
+  },
+  {
+    "name": "load-single-numelts-wrong",
+    "kind": "load",
+    "vi": "C:\\Program Files\\National Instruments\\LabVIEW 2026\\ProjectTemplates\\Source\\Core\\Single Shot Measurement\\subVIs\\Load Configuration Settings from XML.vi",
+    "input": "inputs/load-single-numelts-wrong.xml",
+    "file": "C:\\Program Files\\National Instruments\\LabVIEW 2026\\ProjectTemplates\\Source\\Core\\Single Shot Measurement\\subVIs\\Settings.xml",
+    "outputs": [
+      "User Configuration out",
+      "error out"
+    ],
+    "out": "load-single-numelts-wrong.json"
+  },
+  {
+    "name": "load-single-lone-amp",
+    "kind": "load",
+    "vi": "C:\\Program Files\\National Instruments\\LabVIEW 2026\\ProjectTemplates\\Source\\Core\\Single Shot Measurement\\subVIs\\Load Configuration Settings from XML.vi",
+    "input": "inputs/load-single-lone-amp.xml",
+    "file": "C:\\Program Files\\National Instruments\\LabVIEW 2026\\ProjectTemplates\\Source\\Core\\Single Shot Measurement\\subVIs\\Settings.xml",
+    "outputs": [
+      "User Configuration out",
+      "error out"
+    ],
+    "out": "load-single-lone-amp.json"
+  },
+  {
+    "name": "load-single-bool-minus",
+    "kind": "load",
+    "vi": "C:\\Program Files\\National Instruments\\LabVIEW 2026\\ProjectTemplates\\Source\\Core\\Single Shot Measurement\\subVIs\\Load Configuration Settings from XML.vi",
+    "input": "inputs/load-single-bool-minus.xml",
+    "file": "C:\\Program Files\\National Instruments\\LabVIEW 2026\\ProjectTemplates\\Source\\Core\\Single Shot Measurement\\subVIs\\Settings.xml",
+    "outputs": [
+      "User Configuration out",
+      "error out"
+    ],
+    "out": "load-single-bool-minus.json"
+  },
+  {
+    "name": "load-single-no-version",
+    "kind": "load",
+    "vi": "C:\\Program Files\\National Instruments\\LabVIEW 2026\\ProjectTemplates\\Source\\Core\\Single Shot Measurement\\subVIs\\Load Configuration Settings from XML.vi",
+    "input": "inputs/load-single-no-version.xml",
+    "file": "C:\\Program Files\\National Instruments\\LabVIEW 2026\\ProjectTemplates\\Source\\Core\\Single Shot Measurement\\subVIs\\Settings.xml",
+    "outputs": [
+      "User Configuration out",
+      "error out"
+    ],
+    "out": "load-single-no-version.json"
+  },
+  {
+    "name": "load-single-lvxml-to-lv-xml",
+    "kind": "load",
+    "vi": "C:\\Program Files\\National Instruments\\LabVIEW 2026\\ProjectTemplates\\Source\\Core\\Single Shot Measurement\\subVIs\\Load Configuration Settings from XML.vi",
+    "input": "inputs/load-single-lvxml-to-lv-xml.xml",
+    "file": "C:\\Program Files\\National Instruments\\LabVIEW 2026\\ProjectTemplates\\Source\\Core\\Single Shot Measurement\\subVIs\\Settings.xml",
+    "outputs": [
+      "User Configuration out",
+      "error out"
+    ],
+    "out": "load-single-lvxml-to-lv-xml.json"
+  },
+  {
+    "name": "load-single-lvxml-dump",
+    "kind": "load",
+    "vi": "C:\\Program Files\\National Instruments\\LabVIEW 2026\\ProjectTemplates\\Source\\Core\\Single Shot Measurement\\subVIs\\Load Configuration Settings from XML.vi",
+    "input": "inputs/load-single-lvxml-dump.xml",
+    "file": "C:\\Program Files\\National Instruments\\LabVIEW 2026\\ProjectTemplates\\Source\\Core\\Single Shot Measurement\\subVIs\\Settings.xml",
+    "outputs": [
+      "User Configuration out",
+      "error out"
+    ],
+    "out": "load-single-lvxml-dump.json"
+  },
+  {
+    "name": "load-single-lvxml-dump-version",
+    "kind": "load",
+    "vi": "C:\\Program Files\\National Instruments\\LabVIEW 2026\\ProjectTemplates\\Source\\Core\\Single Shot Measurement\\subVIs\\Load Configuration Settings from XML.vi",
+    "input": "inputs/load-single-lvxml-dump-version.xml",
+    "file": "C:\\Program Files\\National Instruments\\LabVIEW 2026\\ProjectTemplates\\Source\\Core\\Single Shot Measurement\\subVIs\\Settings.xml",
+    "outputs": [
+      "User Configuration out",
+      "error out"
+    ],
+    "out": "load-single-lvxml-dump-version.json"
+  },
+  {
+    "name": "load-dbl-shortest",
+    "kind": "load",
+    "vi": "C:\\Program Files\\National Instruments\\LabVIEW 2026\\examples\\File IO\\XML\\Flatten and Unflatten XML\\Read from XML File and Unflatten Data.vi",
+    "input": "inputs/load-dbl-shortest.xml",
+    "file": "%USERPROFILE%\\Documents\\LabVIEW Data\\Example Flattened XML File.xml",
+    "outputs": [
+      "Max",
+      "Min",
+      "Mean",
+      "Retrieved XML"
+    ],
+    "out": "load-dbl-shortest.json"
+  },
+  {
+    "name": "load-dbl-nonfinite",
+    "kind": "load",
+    "vi": "C:\\Program Files\\National Instruments\\LabVIEW 2026\\examples\\File IO\\XML\\Flatten and Unflatten XML\\Read from XML File and Unflatten Data.vi",
+    "input": "inputs/load-dbl-nonfinite.xml",
+    "file": "%USERPROFILE%\\Documents\\LabVIEW Data\\Example Flattened XML File.xml",
+    "outputs": [
+      "Max",
+      "Min",
+      "Mean",
+      "Retrieved XML"
+    ],
+    "out": "load-dbl-nonfinite.json"
+  },
+  {
+    "name": "load-dbl-nonfinite-lower",
+    "kind": "load",
+    "vi": "C:\\Program Files\\National Instruments\\LabVIEW 2026\\examples\\File IO\\XML\\Flatten and Unflatten XML\\Read from XML File and Unflatten Data.vi",
+    "input": "inputs/load-dbl-nonfinite-lower.xml",
+    "file": "%USERPROFILE%\\Documents\\LabVIEW Data\\Example Flattened XML File.xml",
+    "outputs": [
+      "Max",
+      "Min",
+      "Mean",
+      "Retrieved XML"
+    ],
+    "out": "load-dbl-nonfinite-lower.json"
+  },
+  {
+    "name": "load-dbl-exponent",
+    "kind": "load",
+    "vi": "C:\\Program Files\\National Instruments\\LabVIEW 2026\\examples\\File IO\\XML\\Flatten and Unflatten XML\\Read from XML File and Unflatten Data.vi",
+    "input": "inputs/load-dbl-exponent.xml",
+    "file": "%USERPROFILE%\\Documents\\LabVIEW Data\\Example Flattened XML File.xml",
+    "outputs": [
+      "Max",
+      "Min",
+      "Mean",
+      "Retrieved XML"
+    ],
+    "out": "load-dbl-exponent.json"
+  },
+  {
+    "name": "load-dbl-comma",
+    "kind": "load",
+    "vi": "C:\\Program Files\\National Instruments\\LabVIEW 2026\\examples\\File IO\\XML\\Flatten and Unflatten XML\\Read from XML File and Unflatten Data.vi",
+    "input": "inputs/load-dbl-comma.xml",
+    "file": "%USERPROFILE%\\Documents\\LabVIEW Data\\Example Flattened XML File.xml",
+    "outputs": [
+      "Max",
+      "Min",
+      "Mean",
+      "Retrieved XML"
+    ],
+    "out": "load-dbl-comma.json"
+  },
+  {
+    "name": "load-dbl-space",
+    "kind": "load",
+    "vi": "C:\\Program Files\\National Instruments\\LabVIEW 2026\\examples\\File IO\\XML\\Flatten and Unflatten XML\\Read from XML File and Unflatten Data.vi",
+    "input": "inputs/load-dbl-space.xml",
+    "file": "%USERPROFILE%\\Documents\\LabVIEW Data\\Example Flattened XML File.xml",
+    "outputs": [
+      "Max",
+      "Min",
+      "Mean",
+      "Retrieved XML"
+    ],
+    "out": "load-dbl-space.json"
+  },
+  {
+    "name": "load-dbl-negzero",
+    "kind": "load",
+    "vi": "C:\\Program Files\\National Instruments\\LabVIEW 2026\\examples\\File IO\\XML\\Flatten and Unflatten XML\\Read from XML File and Unflatten Data.vi",
+    "input": "inputs/load-dbl-negzero.xml",
+    "file": "%USERPROFILE%\\Documents\\LabVIEW Data\\Example Flattened XML File.xml",
+    "outputs": [
+      "Max",
+      "Min",
+      "Mean",
+      "Retrieved XML"
+    ],
+    "out": "load-dbl-negzero.json"
+  },
+  {
+    "name": "load-dbl-overflow",
+    "kind": "load",
+    "vi": "C:\\Program Files\\National Instruments\\LabVIEW 2026\\examples\\File IO\\XML\\Flatten and Unflatten XML\\Read from XML File and Unflatten Data.vi",
+    "input": "inputs/load-dbl-overflow.xml",
+    "file": "%USERPROFILE%\\Documents\\LabVIEW Data\\Example Flattened XML File.xml",
+    "outputs": [
+      "Max",
+      "Min",
+      "Mean",
+      "Retrieved XML"
+    ],
+    "out": "load-dbl-overflow.json"
+  },
+  {
+    "name": "load-dbl-signed-nonfinite",
+    "kind": "load",
+    "vi": "C:\\Program Files\\National Instruments\\LabVIEW 2026\\examples\\File IO\\XML\\Flatten and Unflatten XML\\Read from XML File and Unflatten Data.vi",
+    "input": "inputs/load-dbl-signed-nonfinite.xml",
+    "file": "%USERPROFILE%\\Documents\\LabVIEW Data\\Example Flattened XML File.xml",
+    "outputs": [
+      "Max",
+      "Min",
+      "Mean",
+      "Retrieved XML"
+    ],
+    "out": "load-dbl-signed-nonfinite.json"
+  },
+  {
+    "name": "load-dbl-hex",
+    "kind": "load",
+    "vi": "C:\\Program Files\\National Instruments\\LabVIEW 2026\\examples\\File IO\\XML\\Flatten and Unflatten XML\\Read from XML File and Unflatten Data.vi",
+    "input": "inputs/load-dbl-hex.xml",
+    "file": "%USERPROFILE%\\Documents\\LabVIEW Data\\Example Flattened XML File.xml",
+    "outputs": [
+      "Max",
+      "Min",
+      "Mean",
+      "Retrieved XML"
+    ],
+    "out": "load-dbl-hex.json"
+  },
+  {
+    "name": "load-dbl-empty",
+    "kind": "load",
+    "vi": "C:\\Program Files\\National Instruments\\LabVIEW 2026\\examples\\File IO\\XML\\Flatten and Unflatten XML\\Read from XML File and Unflatten Data.vi",
+    "input": "inputs/load-dbl-empty.xml",
+    "file": "%USERPROFILE%\\Documents\\LabVIEW Data\\Example Flattened XML File.xml",
+    "outputs": [
+      "Max",
+      "Min",
+      "Mean",
+      "Retrieved XML"
+    ],
+    "out": "load-dbl-empty.json"
+  }
+]

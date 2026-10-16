@@ -11,8 +11,9 @@ from ._treejson import check_shape
 # The declaration LabVIEW's XML file writer emits before <LVData>.
 DECLARATION = "<?xml version='1.0' standalone='yes' ?>"
 
-# Characters XML 1.0 cannot carry at all, even escaped.
-_ILLEGAL = re.compile("[\x00-\x08\x0b\x0c\x0e-\x1f\ud800-\udfff\ufffe\uffff]")
+# Text no XML document can hold. LabVIEW writes other control characters raw, and so does
+# dump, so that a file LabVIEW wrote comes back byte for byte.
+_ILLEGAL = re.compile("[\ud800-\udfff\ufffe\uffff]")
 
 
 def dump(

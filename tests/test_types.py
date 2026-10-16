@@ -105,8 +105,12 @@ def test_encoding_errors_carry_the_value_path() -> None:
 
 
 def test_unwritable_characters_raise() -> None:
-    with pytest.raises(LVXMLError, match="U\\+0000"):
-        to_lv_xml("a\x00b", "String")
+    with pytest.raises(LVXMLError, match="U\\+D800"):
+        to_lv_xml("a\ud800b", "String")
+
+
+def test_control_characters_are_written_raw_like_labview() -> None:
+    assert "<Val>a\x00\x07b</Val>" in to_lv_xml("a\x00\x07b", "String")
 
 
 @pytest.mark.parametrize(

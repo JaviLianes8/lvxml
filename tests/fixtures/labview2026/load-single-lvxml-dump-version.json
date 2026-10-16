@@ -1,0 +1,19 @@
+{
+  "job": "load-single-lvxml-dump-version",
+  "finished": true,
+  "User Configuration out": [
+    [
+      "a&b <\"q\">",
+      1
+    ],
+    [
+      false
+    ],
+    2
+  ],
+  "error out": [
+    false,
+    0,
+    ""
+  ]
+}
