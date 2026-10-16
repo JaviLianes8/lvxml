@@ -8,10 +8,11 @@ from xml.etree import ElementTree as ET
 from ._errors import LVXMLError
 from ._text import quote
 
-# Markup is a comment, a processing instruction, or a tag that ends at the first ">" outside a
-# quoted attribute value. XML allows no "<" inside a tag, so a tag scan stops at the next "<";
-# comments and instructions are checked to be closed first, so their scans always end.
-_MARKUP = re.compile(r"""(<!--.*?-->|<\?.*?\?>|<(?:[^<>"']|"[^<"]*"|'[^<']*')*>)""", re.S)
+# A tag ends at the first ">" outside a quoted attribute value. XML allows no "<" inside a
+# tag, so a tag scan never passes the next "<" and the markup scan stays linear.
+_TAG = re.compile(r"""<(?:[^<>"']|"[^<"]*"|'[^<']*')*>""")
+# Comments and processing instructions end at their own closer, whatever they hold.
+_CLOSERS = (("<!--", "-->"), ("<?", "?>"))
 _DECLARATION = re.compile(r"\A\ufeff?\s*<\?xml\b[^>]*\?>")
 _ENCODING = re.compile(rb"\A\s*<\?xml\b[^>]*\bencoding\s*=\s*[\"']([A-Za-z0-9._-]+)[\"']")
 # LabVIEW decodes only these three entities; any other ampersand is literal text to it.
@@ -66,8 +67,7 @@ def load(text: str) -> ET.Element:
         raise LVXMLError("CDATA sections are not supported; LabVIEW escapes text instead")
     # The text is already decoded, so an encoding named in the declaration must not apply.
     body = _DECLARATION.sub("", text, count=1)
-    if body.rfind("<!--") > body.rfind("-->") or body.rfind("<?") > body.rfind("?>"):
-        raise LVXMLError("invalid XML: a comment or processing instruction is never closed")
+    split_markup(body)  # refuses a comment or processing instruction that is never closed
     body = _hide(_literal_ampersands(body))
     try:
         root = ET.fromstring(_keep_carriage_returns(body))
@@ -81,12 +81,41 @@ def load(text: str) -> ET.Element:
     return root
 
 
+def split_markup(text: str) -> list[str]:
+    """Split `text` into text and markup, alternately, starting and ending with text.
+
+    >>> split_markup("a<!-- < -->b<c x='>'>d")
+    ['a', '<!-- < -->', 'b', "<c x='>'>", 'd']
+    """
+    parts: list[str] = []
+    start = done = 0
+    while (here := text.find("<", start)) != -1:
+        end = _markup_end(text, here)
+        if end is None:  # a "<" that starts no markup stays text; the parser refuses it
+            start = here + 1
+            continue
+        parts += [text[done:here], text[here:end]]
+        start = done = end
+    return [*parts, text[done:]]
+
+
+def _markup_end(text: str, here: int) -> int | None:
+    for opener, closer in _CLOSERS:
+        if text.startswith(opener, here):
+            end = text.find(closer, here + len(opener))
+            if end == -1:
+                raise LVXMLError("invalid XML: a comment or processing instruction is never closed")
+            return end + len(closer)
+    match = _TAG.match(text, here)
+    return match.end() if match else None
+
+
 def _literal_ampersands(text: str) -> str:
     """Escape every ampersand LabVIEW keeps literal, in text only; attribute values such as
     the namespace keep the entities XML gives them."""
     if "&" not in text:
         return text
-    parts = _MARKUP.split(text)
+    parts = split_markup(text)
     parts[::2] = [_FOREIGN_AMPERSAND.sub("&amp;", part) for part in parts[::2]]
     return "".join(parts)
 
@@ -113,7 +142,7 @@ def _keep_carriage_returns(text: str) -> str:
     """Encode CRs inside the root element so the parser does not fold them into LFs."""
     if "\r" not in text:
         return text
-    parts = _MARKUP.split(text)
+    parts = split_markup(text)
     tags = [i for i in range(1, len(parts), 2) if not parts[i].startswith(("<?", "<!"))]
     if not tags:
         return text
