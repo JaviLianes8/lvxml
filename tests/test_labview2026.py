@@ -53,7 +53,7 @@ def test_files_labview_wrote_come_back_byte_for_byte(job: dict[str, Any]) -> Non
 @pytest.mark.parametrize("job", SAVES, ids=[job["name"] for job in SAVES])
 def test_values_read_are_the_values_labview_was_given(job: dict[str, Any]) -> None:
     (node,) = parse(text_of(HERE / job["out"])).values
-    value = to_value(node)
+    value: Any = to_value(node)
     assert isinstance(value, dict)
     given = plain(job["value"])
     hardware = list(value["Hardware Configuration"].values())
@@ -82,7 +82,7 @@ def test_labview_writes_the_system_code_page_not_utf8() -> None:
 def test_labview_writes_control_characters_raw_and_lvxml_reads_them() -> None:
     raw = (HERE / "save-cont-control.xml").read_bytes()
     assert b"bell\x07 unit\x1f" in raw
-    value = from_lv_xml(raw)
+    value: Any = from_lv_xml(raw)
     assert isinstance(value, dict)
     assert value["Hardware Configuration"]["HW Refnum <Replace Me>"] == "bell\x07 unit\x1f"
 
@@ -103,7 +103,7 @@ def expected_single(result: dict[str, Any]) -> dict[str, Any]:
 
 
 def lvxml_single(text: str) -> dict[str, Any]:
-    value = from_lv_xml(text)
+    value: Any = from_lv_xml(text)
     assert isinstance(value, dict)
     (node,) = parse(text).values
     hardware, analysis = value["Hardware Configuration"], value["Analysis Configuration"]

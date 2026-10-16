@@ -11,14 +11,20 @@ requires-python = ">=3.10"
 license = "MIT"
 license-files = ["LICENSE"]
 authors = [{ name = "Javier Lianes", email = "javier@lianes8studio.com" }]
-keywords = ["labview", "xml", "codec", "flatten", "unflatten", "ni"]
+keywords = ["labview", "xml", "flatten to xml", "unflatten from xml", "codec", "ni", "lvdata"]
 classifiers = [
-    "Development Status :: 4 - Beta",
+    "Development Status :: 5 - Production/Stable",
     "Environment :: Console",
     "Intended Audience :: Developers",
     "Intended Audience :: Science/Research",
     "Topic :: Scientific/Engineering",
     "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Programming Language :: Python :: 3.14",
+    "Operating System :: OS Independent",
     "Typing :: Typed",
 ]
 dependencies = []
@@ -33,7 +39,7 @@ lvxml = "lvxml._cli:main"
 
 [project.urls]
 Homepage = "https://lianes8studio.com"
-Repository = "https://github.com/JaviLianes8/lvxml"
+Source = "https://github.com/JaviLianes8/lvxml"
 Issues = "https://github.com/JaviLianes8/lvxml/issues"
 Changelog = "https://github.com/JaviLianes8/lvxml/blob/main/CHANGELOG.md"
 LinkedIn = "https://www.linkedin.com/in/jlianes/"
@@ -47,6 +53,9 @@ only-include = [
     "src/lvxml",
     "tests",
     "scripts/capture_ni.py",
+    "scripts/capture-labview-xml.ps1",
+    "scripts/make_labview_jobs.py",
+    "GUIDE.md",
     "README.md",
     "CHANGELOG.md",
     "CONTRIBUTING.md",
@@ -66,6 +75,11 @@ select = ["E", "F", "I", "UP", "B", "SIM", "RUF"]
 [tool.mypy]
 python_version = "3.10"
 strict = true
+
+# lxml ships no type information; it is only used by the tests to read LabVIEW's XSD.
+[[tool.mypy.overrides]]
+module = ["lxml", "lxml.*"]
+ignore_missing_imports = true
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
