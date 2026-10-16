@@ -66,7 +66,8 @@ the guide states.
 
 ## API review (items 1 to 5)
 
-The fifteen public names of 0.2.1 keep their names, parameters and defaults. Behaviour
+The fifteen public names of 0.2.1 keep their names, parameters and defaults, and `Schema` and
+`Value` are added for annotations. Behaviour
 changes, all in CHANGELOG 1.0.0 and the guide's upgrade list: the LabVIEW text rules above;
 schema objects, `Node` and `Document` check their fields when built; `dump` checks `newline`
 and `indent`; any bytes-like input is read; messages quote at most 40 characters and
