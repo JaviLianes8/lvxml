@@ -16,7 +16,13 @@ def from_lv_xml(text: str | bytes) -> Value:
     """Parse LabVIEW flattened XML into the Python value of its first value element.
 
     Inside an ``<LVData>`` file wrapper the ``<Version>`` header is skipped; use
-    `from_lv_xml_all` when the file holds several values.
+    `from_lv_xml_all` when the file holds several values. Bytes are decoded by their XML
+    declaration, or as UTF-8.
+
+    >>> from_lv_xml("<I32><Name>count</Name><Val>-7</Val></I32>")
+    -7
+    >>> from_lv_xml("<Boolean><Name>on</Name><Val>1</Val></Boolean>")
+    True
     """
     document = parse(text)
     if not document.values:
@@ -26,7 +32,15 @@ def from_lv_xml(text: str | bytes) -> Value:
 
 
 def from_lv_xml_all(text: str | bytes) -> list[Value]:
-    """Parse LabVIEW flattened XML into the Python values of every value element, in order."""
+    """Parse LabVIEW flattened XML into the Python values of every value element, in order.
+
+    >>> from_lv_xml_all(
+    ...     "<LVData><Version>26.3.1f1</Version>"
+    ...     "<DBL><Name>a</Name><Val>0.5</Val></DBL>"
+    ...     "<String><Name>b</Name><Val>x &amp; y</Val></String></LVData>"
+    ... )
+    [0.5, 'x & y']
+    """
     document = parse(text)
     root = "LVData" if document.wrapped else ""
     return [_value(node, root) for node in document.values]
@@ -41,6 +55,10 @@ def to_value(node: Node) -> Value:
     ``Array`` becomes a list, nested once per dimension, and a ``Cluster`` a dict keyed by
     field name. ``LvVariant``, ``Timestamp``, ``WDT``, ``DynamicData``, ``DigitalData``
     and the waveform elements become the list of their items' values.
+
+    >>> from lvxml import Node
+    >>> to_value(Node("EW", "mode", val="1", choices=("Idle", "Run")))
+    'Run'
     """
     check_shape(node, "")
     try:

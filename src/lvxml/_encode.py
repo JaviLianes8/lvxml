@@ -21,12 +21,34 @@ from ._text import quote
 
 
 def to_lv_xml(value: Value, schema: Schema, name: str = "") -> str:
-    """Render `value` as LabVIEW flattened XML matching `schema`, indented for reading."""
+    """Render `value` as LabVIEW flattened XML matching `schema`, indented for reading.
+
+    The text is the bare form Flatten To XML returns, with LF line breaks and two-space
+    indentation; use `to_node` and `dump` for other layouts or a whole ``<LVData>`` file.
+
+    >>> print(to_lv_xml([1.5, 2.0], Array("DBL"), name="xs"))
+    <Array>
+      <Name>xs</Name>
+      <Dimsize>2</Dimsize>
+      <DBL>
+        <Name></Name>
+        <Val>1.5</Val>
+      </DBL>
+      <DBL>
+        <Name></Name>
+        <Val>2.0</Val>
+      </DBL>
+    </Array>
+    """
     return dump(to_node(value, schema, name), newline="\n", indent="  ")
 
 
 def to_node(value: Value, schema: Schema, name: str = "") -> Node:
-    """Build the typed `Node` for `value` under `schema`, checking every type and range."""
+    """Build the typed `Node` for `value` under `schema`, checking every type and range.
+
+    >>> to_node(True, "Boolean", name="on")
+    Node(tag='Boolean', name='on', val='1', choices=(), dims=(), num_elts=None, items=(), extra=())
+    """
     try:
         return _encode(value, schema, name, name or "value")
     except RecursionError:

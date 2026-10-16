@@ -92,6 +92,11 @@ def validate(text: str | bytes) -> list[str]:
     since its structure cannot be trusted further. A well-shaped one is then checked
     value by value: numbers that parse and fit their type, enum indexes inside the
     choice list, and ``NumElts`` and ``Dimsize`` that match the elements present.
+
+    >>> validate("<I8><Name>n</Name><Val>300</Val></I8>")
+    ['I8[n]: 300 is out of range for I8 (-128..127)']
+    >>> validate("<I8><Name>n</Name><Val>-3</Val></I8>")
+    []
     """
     try:
         document = parse(text)

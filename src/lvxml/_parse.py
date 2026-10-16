@@ -23,7 +23,14 @@ MAX_DEPTH = 100
 def parse(text: str | bytes) -> Document:
     """Parse LabVIEW Flatten-To-XML, bare or inside ``<LVData>``, into a `Document`.
 
-    Bytes are decoded by the encoding their XML declaration names, or as UTF-8.
+    Bytes are decoded by the encoding their XML declaration names, or as UTF-8. Text
+    is read as LabVIEW reads it: only ``&lt;``, ``&gt;`` and ``&amp;`` are entities, and
+    carriage returns and control characters are kept.
+
+    >>> document = parse("<LVData><Version>26.3.1f1</Version>"
+    ...                  "<String><Name>s</Name><Val>a &quot;b&quot;</Val></String></LVData>")
+    >>> document.version, document.values[0].val
+    ('26.3.1f1', 'a &quot;b&quot;')
     """
     root = load(decode(text))
     tag, namespace = _split(root.tag)

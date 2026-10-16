@@ -1,4 +1,13 @@
-"""Codec between LabVIEW's Flatten/Unflatten XML schema and native Python values."""
+"""Codec between LabVIEW's Flatten/Unflatten XML schema and native Python values.
+
+`lvxml.LVDATA_NAMESPACE` is the namespace LabVIEW's XML file writer puts on ``<LVData>``.
+
+>>> import lvxml
+>>> lvxml.from_lv_xml("<DBL><Name>x</Name><Val>0.25</Val></DBL>")
+0.25
+>>> lvxml.LVDATA_NAMESPACE
+'http://www.ni.com/LVData'
+"""
 
 from __future__ import annotations
 
