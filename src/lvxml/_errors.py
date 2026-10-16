@@ -35,7 +35,7 @@ class LVXMLError(ValueError):
 def _cut(text: str) -> str:
     if len(text) <= _SHOWN:
         return text
-    half = _SHOWN // 2 - 2
+    half = (_SHOWN - 5) // 2
     return f"{text[:half]} ... {text[-half:]}"
 
 
