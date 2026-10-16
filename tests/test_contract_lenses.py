@@ -83,3 +83,40 @@ def test_every_public_class_reports_the_package_and_the_type_aliases_are_public(
     assert lvxml.Schema is not None and lvxml.Value is not None
     value: lvxml.Value = from_lv_xml("<I8><Name>n</Name><Val>1</Val></I8>")
     assert value == 1
+
+
+@pytest.mark.parametrize(
+    "xml",
+    [
+        "<Boolean><Name>b</Name><Val>TAB1</Val></Boolean>",
+        "<Boolean><Name>b</Name><Val>1CRLF</Val></Boolean>",
+        "<EW><Name>e</Name><Choice>a</Choice><Choice>b</Choice><Val>TAB1</Val></EW>",
+        "<EW><Name>e</Name><Choice>a</Choice><Choice>b</Choice><Val>+1</Val></EW>",
+        "<I32><Name>n</Name><Val>+1</Val></I32>",
+        "<DBL><Name>x</Name><Val>InfTAB</Val></DBL>",
+        "<DBL><Name>x</Name><Val>NBSP1</Val></DBL>",
+        "<Refnum><Name>r</Name><Val>12</Val></Refnum>",
+    ],
+)
+def test_spellings_labview_2026_refuses_are_refused(xml: str) -> None:
+    text = xml.replace("TAB", "\t").replace("CRLF", "\r\n").replace("NBSP", "\xa0")
+    with pytest.raises(lvxml.LVXMLError):
+        from_lv_xml(text)
+    assert lvxml.validate(text)
+
+
+def test_spaces_around_numbers_are_allowed_as_labview_allows_them() -> None:
+    assert from_lv_xml("<Boolean><Name>b</Name><Val> 1 </Val></Boolean>") is True
+    assert from_lv_xml("<DBL><Name>x</Name><Val> 2.5 </Val></DBL>") == 2.5
+    assert from_lv_xml("<Refnum><Name>r</Name><Val> 0x12345678 </Val></Refnum>") == " 0x12345678 "
+
+
+def test_version_must_come_first_and_validate_asks_for_one() -> None:
+    value = "<I8><Name>n</Name><Val>1</Val></I8>"
+    with pytest.raises(lvxml.LVXMLError, match="must come before"):
+        lvxml.parse(f"<LVData>{value}<Version>1</Version></LVData>")
+    assert lvxml.validate(f"<LVData><Version>1</Version>{value}</LVData>") == []
+    assert lvxml.validate(f"<LVData>{value}</LVData>") == [
+        "LVData: no <Version> header; LabVIEW's file reader refuses such a file"
+    ]
+    assert lvxml.validate(value) == []

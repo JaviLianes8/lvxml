@@ -9,13 +9,14 @@ import struct
 from ._schema import ENUM_RANGES, INT_RANGES
 from ._text import quote
 
-# A period is the only decimal separator: LabVIEW does not localize this format.
+# A period is the only decimal separator: LabVIEW does not localize this format. LabVIEW 2026
+# allows spaces around a number, but not tabs or line breaks, and no plus sign on an integer.
 _FLOAT = re.compile(r"[+-]?(\d+\.?\d*|\.\d+)([eE][+-]?\d+)?")
 # LabVIEW 2026 reads these in any case and refuses "Infinity", "+NaN" and "-NaN".
 _NON_FINITE = {"nan": math.nan, "inf": math.inf, "+inf": math.inf, "-inf": -math.inf}
-_INT = re.compile(r"[+-]?\d+")
+_INT = re.compile(r"-?\d+")
 # LabVIEW's run-time library formats a complex value as "<re> +<im> i".
-_COMPLEX = re.compile(r"\s*(\S+)\s*\+\s*(\S+)\s*i\s*")
+_COMPLEX = re.compile(r" *([^ ]+) *\+ *([^ ]+) *i *")
 
 
 def parse_float(text: str) -> float:
@@ -24,7 +25,7 @@ def parse_float(text: str) -> float:
     >>> parse_float(" 1.5E3 "), parse_float("-inf")
     (1500.0, -inf)
     """
-    stripped = text.strip()
+    stripped = text.strip(" ")
     if stripped.lower() in _NON_FINITE:
         return _NON_FINITE[stripped.lower()]
     if not stripped.isascii() or not _FLOAT.fullmatch(stripped):
@@ -43,7 +44,7 @@ def parse_complex(text: str) -> complex:
 
 def parse_int(text: str, tag: str) -> int:
     """Parse a decimal integer and check it fits `tag`'s range (an integer or enum tag)."""
-    stripped = text.strip()
+    stripped = text.strip(" ")
     if not stripped.isascii() or not _INT.fullmatch(stripped):
         raise ValueError(f"invalid integer value {quote(text)}")
     value = int(stripped, 10)
@@ -63,7 +64,7 @@ def parse_bool(text: str) -> bool:
     >>> parse_bool("1"), parse_bool(" 0 "), parse_bool("2")
     (True, False, True)
     """
-    stripped = text.strip()
+    stripped = text.strip(" ")
     if not stripped.isascii() or not stripped.isdigit():
         raise ValueError(f"invalid boolean value {quote(text)}, expected unsigned digits")
     return int(stripped, 10) != 0

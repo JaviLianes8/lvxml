@@ -90,16 +90,12 @@ def test_floats_labview_reads_are_read(val: str, value: float) -> None:
     assert from_lv_xml(f"<DBL><Name>x</Name><Val>{val}</Val></DBL>") == value
 
 
-def test_refnum_kinds_are_read_in_either_place_and_written_before_val() -> None:
+def test_refnum_kinds_are_read_and_written_only_before_val_as_labview_does() -> None:
     kinds = "<RefKind>VI</RefKind><RefType>Control</RefType>"
     labview = f"<Refnum><Name>r</Name>{kinds}<Val>0x1</Val></Refnum>"
-    schema = f"<Refnum><Name>r</Name><Val>0x1</Val>{kinds}</Refnum>"
-    assert parse(labview) == parse(schema)
-    assert (
-        dump(parse(schema).values[0], newline="\n")
-        .replace("\n", "")
-        .startswith("<Refnum><Name>r</Name><RefKind>VI")
-    )
+    assert dump(parse(labview).values[0], newline="\n").replace("\n", "") == labview
+    with pytest.raises(LVXMLError, match="go before <Val>"):
+        parse(f"<Refnum><Name>r</Name><Val>0x1</Val>{kinds}</Refnum>")
     with pytest.raises(LVXMLError):
         parse(
             "<Refnum><Name>r</Name><RefKind>VI</RefKind><Val>0</Val><RefKind>VI</RefKind></Refnum>"

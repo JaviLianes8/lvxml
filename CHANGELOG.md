@@ -20,8 +20,12 @@ LabVIEW 2026 writes and reads (see the guide, "What each rule rests on").
 - `Boolean` text is unsigned digits, `0` false and any other number true; `true` and
   `false` raise.
 - `Infinity` in any spelling raises, as LabVIEW refuses it.
-- A refnum's `RefKind` and `RefType` are read together, `RefKind` first, before or after
-  `<Val>`, and written before it, where LabVIEW 2026 puts them.
+- A refnum's `RefKind` and `RefType` are read and written before `<Val>`, where LabVIEW 2026
+  puts them; after `<Val>`, the shipped XSD's order, which LabVIEW refuses, they raise. A
+  refnum value must be `0x` and hex digits.
+- Spaces around numbers are allowed and other white space raises; an integer or enum index
+  with a plus sign raises.
+- A `<Version>` after a value raises; `validate` reports an `<LVData>` document without one.
 - Bytes that are not UTF-8 raise with a hint that LabVIEW writes the system code page;
   `bytearray` and `memoryview` are read; an encoding the declaration names that Python
   lacks raises `LVXMLError` with a short message.

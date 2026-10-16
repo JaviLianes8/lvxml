@@ -46,7 +46,8 @@ def test_the_codec_knows_exactly_the_value_elements_the_xsd_defines() -> None:
 @requires_xsd
 @pytest.mark.parametrize("path", ALL_FILES, ids=lambda p: p.name)
 def test_every_fixture_is_valid_against_the_xsd(path: Path) -> None:
-    assert xsd_valid(read(path))
+    # LabVIEW 2026 writes RefKind before <Val>, an order its own XSD does not allow.
+    assert xsd_valid(read(path)) == ("<RefKind>" not in read(path))
 
 
 @pytest.mark.parametrize("path", ALL_FILES, ids=lambda p: p.name)

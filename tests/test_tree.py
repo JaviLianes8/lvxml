@@ -69,7 +69,7 @@ def test_dump_options() -> None:
 
 def test_refnum_extra_fields_round_trip() -> None:
     text = (
-        "<Refnum><Name>r</Name><Val>0x1</Val><RefKind>VI</RefKind><RefType>Control</RefType>"
+        "<Refnum><Name>r</Name><RefKind>VI</RefKind><RefType>Control</RefType><Val>0x1</Val>"
         "<ActiveXType><GUID>{0}</GUID></ActiveXType><DotNetType><Name>N</Name></DotNetType></Refnum>"
     )
     node = parse(text).values[0]

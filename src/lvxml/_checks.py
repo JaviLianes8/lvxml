@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import math
+import re
 from collections.abc import Iterator
 
 from ._errors import LVXMLError
@@ -10,7 +11,9 @@ from ._node import Document, Node
 from ._numbers import parse_bool, parse_complex, parse_float, parse_int
 from ._parse import parse
 from ._schema import COMPLEX_TAGS, ENUM_RANGES, FLOAT_TAGS, INT_RANGES
-from ._text import join, segment
+from ._text import join, quote, segment
+
+_REFNUM = re.compile(r"0x[0-9A-Fa-f]+")
 
 # An empty array with leading non-zero sizes (such as 1000x0) decodes to nested empty lists;
 # more than this many is refused so a tiny input cannot demand unbounded memory.
@@ -71,6 +74,9 @@ def _check_val(node: Node) -> None:
         index = parse_int(text, node.tag)
         if index >= len(node.choices):
             raise ValueError(f"enum index {index} is past its {len(node.choices)} choices")
+    elif node.tag == "Refnum" and not _REFNUM.fullmatch(text.strip(" ")):
+        # LabVIEW writes a refnum as 0x and hex digits and refuses a decimal one.
+        raise ValueError(f"invalid refnum value {quote(text)}, expected 0x and hex digits")
 
 
 def child_path(parent: str, node: Node) -> str:
@@ -102,7 +108,10 @@ def validate(text: str | bytes | bytearray | memoryview) -> list[str]:
         document = parse(text)
     except LVXMLError as exc:
         return [str(exc)]
-    return document_problems(document)
+    found = document_problems(document)
+    if document.wrapped and document.version is None:
+        found.append("LVData: no <Version> header; LabVIEW's file reader refuses such a file")
+    return found
 
 
 def document_problems(document: Document) -> list[str]:

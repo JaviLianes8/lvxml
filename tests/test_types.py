@@ -158,5 +158,5 @@ def test_container_types_decode_to_lists_of_items() -> None:
 
 
 def test_refnum_decodes_to_its_val_text() -> None:
-    xml = "<Refnum><Name>q</Name><Val>0x0000002a</Val><RefKind>Queue</RefKind></Refnum>"
+    xml = "<Refnum><Name>q</Name><RefKind>Queue</RefKind><Val>0x0000002a</Val></Refnum>"
     assert from_lv_xml(xml) == "0x0000002a"

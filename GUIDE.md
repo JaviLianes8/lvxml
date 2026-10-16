@@ -40,8 +40,12 @@ True
 ```
 
 Floats are digits with an optional sign, period and exponent, or `NaN`, `Inf`, `+Inf` and
-`-Inf` in any case, with spaces around them allowed. A comma decimal separator, `Infinity`,
-a signed `NaN` and an empty value raise, as they make LabVIEW 2026 refuse the value. A
+`-Inf` in any case. Integers and enum indexes are digits with an optional minus sign, no
+plus sign. Spaces around any number are allowed; tabs, line breaks and other white space
+are not. A comma decimal separator, `Infinity`, a signed `NaN`, an empty value, white space
+other than spaces and a plus sign on an enum index raise, as they make LabVIEW 2026 refuse
+the value. LabVIEW also reads SI suffixes such as `1k` or `2.5m`; `lvxml` refuses them
+rather than guess. A refnum's `<Val>` is `0x` and hex digits, as LabVIEW writes it. A
 cluster whose fields share a name cannot become a dict without losing data, so it raises;
 read it through the typed tree instead.
 
@@ -125,15 +129,19 @@ declaration for an `<LVData>` document. `newline` is CRLF, LF or CR and `indent`
 and tabs. Node fields are type checked when a node is built (`TypeError`). `dump` checks
 the shape: which parts a tag takes and which children it may hold (`LVXMLError`); it writes
 values as they are, so a raw `<Val>` such as `300` in an `I8` is written. `to_value` and
-`validate` check the values. A refnum's `RefKind` and `RefType` are written before `<Val>`,
-where LabVIEW 2026 writes them; the reader takes them together, `RefKind` first, either
-before or after `<Val>`.
+`validate` check the values. A refnum's `RefKind` and `RefType` go before `<Val>`, where
+LabVIEW 2026 writes and reads them; after `<Val>`, the order the shipped XSD defines, they
+raise, since LabVIEW refuses that order. `ActiveXType` and `DotNetType` follow `<Val>`, as
+in the XSD (no LabVIEW sample). In an `<LVData>` document every `<Version>` header comes
+before the values; LabVIEW ignores its text.
 
 ## Files and code pages
 
 LabVIEW writes XML files in the system code page (cp1252 on a Western Windows) while the
-declaration names no encoding. Bytes that are not UTF-8 therefore raise with a hint; decode
-them with the code page and pass the text:
+declaration names no encoding, and it reads files with the code page even when the
+declaration names another encoding. `lvxml` follows the declaration (UTF-8 when there is
+none), so bytes that are not UTF-8 raise with a hint; decode them with the code page and
+pass the text:
 
 ```pycon
 >>> data = b"<String><Name>s</Name><Val>caf\xe9</Val></String>"
@@ -164,7 +172,9 @@ code page:
 `validate(text)` returns a list of problems, empty when the document is good. It first
 checks the element structure `LVXMLSchema.xsd` defines, reporting one problem if that fails,
 then every value: numbers that parse and fit their type, enum indexes inside their choices,
-and `NumElts` and `Dimsize` that match the elements present.
+and `NumElts` and `Dimsize` that match the elements present. An `<LVData>` document without
+a `<Version>` header gets one more problem, since LabVIEW's file reader refuses it, although
+`parse` and `from_lv_xml` read it.
 
 ```pycon
 >>> from lvxml import validate
@@ -225,9 +235,14 @@ read back (`tests/fixtures/labview2026`, captured by `scripts/capture-labview-xm
 - escaping: only `&`, `<` and `>`, quotes and apostrophes as they are, tabs, carriage
   returns and control characters raw, text in the system code page;
 - reading: only the three entities are decoded; Boolean text is digits (`2` and ` 1 ` are
-  true, `true`, `TRUE` and `-1` are refused); floats as listed above; the namespace may be
-  LabVIEW's, the XSD's or none, and indentation is allowed; a wrong `NumElts`, a negative
-  enum index or a file without `<Version>` is refused; an index past the choices is clamped;
+  true, `true`, `TRUE` and `-1` are refused); numbers as listed above, spaces allowed and
+  tabs or line breaks refused; the namespace may be LabVIEW's, the XSD's or none, and
+  indentation is allowed; a wrong `NumElts`, a negative or plus-signed enum index, a file
+  without `<Version>` or with `<Version>` after a value, `RefKind` after `<Val>` and a
+  decimal refnum value are refused; an index past the choices is clamped;
+- where `lvxml` is stricter than LabVIEW, never reading a different value: SI suffixes, a
+  raw `<` or `>` in text, CDATA sections and attributes, which LabVIEW reads or ignores,
+  raise; a refnum kind that does not suit its type is not checked;
 - `lvxml`'s own output: a file `dump` wrote with a `Version` header was read by LabVIEW
   with every value intact.
 
@@ -255,24 +270,29 @@ Every behaviour change in 1.0.0, also listed in the changelog:
 3. `Boolean` text is unsigned digits, `0` false and any other number true; `true` and
    `false` raise (0.2 read them and raised for `2`).
 4. `Infinity` in any spelling raises (0.2 read it as infinity).
-5. A refnum's `RefKind` and `RefType` are read together, `RefKind` first, before or after
-   `<Val>`, and written before it (0.2 refused LabVIEW's own order and wrote them after).
-6. Bytes that are not UTF-8 raise with a code page hint; `bytearray` and `memoryview` are
+5. A refnum's `RefKind` and `RefType` are read and written before `<Val>`, as LabVIEW does;
+   after `<Val>` they raise (0.2 accepted only that order, which LabVIEW refuses), and a
+   refnum value that is not `0x` and hex digits is a value error.
+6. Spaces around numbers are allowed, other white space raises; an integer or enum index
+   with a plus sign raises (0.2 allowed any white space and a plus sign).
+7. A `<Version>` after a value raises, and `validate` reports an `<LVData>` document
+   without one.
+8. Bytes that are not UTF-8 raise with a code page hint; `bytearray` and `memoryview` are
    read; an unknown declared encoding raises `LVXMLError` with a short message.
-7. `Array`, `Cluster` and `LVEnum` check their contents when built: an unknown tag raises
+9. `Array`, `Cluster` and `LVEnum` check their contents when built: an unknown tag raises
    `ValueError` and a wrong type `TypeError` (0.2 raised only when writing); a non-integer
    `ndim` raises `TypeError` (was `ValueError`); `Cluster` copies its fields into a new dict.
-8. `Node` and `Document` check their field types when built (`TypeError`) and store lists as
+10. `Node` and `Document` check their field types when built (`TypeError`) and store lists as
    tuples.
-9. `dump` takes only CRLF, LF or CR as `newline` and spaces and tabs as `indent`; `dump`
+11. `dump` takes only CRLF, LF or CR as `newline` and spaces and tabs as `indent`; `dump`
    raises `TypeError` for anything but a `Document` or `Node`, `to_value` for anything but a
    `Node` (0.2 raised `AttributeError`).
-10. Messages quote at most 40 characters of a value and stay bounded; some wording changed
+12. Messages quote at most 40 characters of a value and stay bounded; some wording changed
     (`unknown scalar tag`, `cannot decode byte N as utf-8`, `unknown encoding` for a declared
     encoding Python lacks). Errors pickle with their message and path, and every public class
     reports the module `lvxml`.
-11. `lvxml.Schema` and `lvxml.Value` name the schema and value types for annotations.
-12. The command line exits with status 2 for usage mistakes (was 1); `to-xml` reads its JSON
+13. `lvxml.Schema` and `lvxml.Value` name the schema and value types for annotations.
+14. The command line exits with status 2 for usage mistakes (was 1); `to-xml` reads its JSON
     as UTF-8 and `--encoding` only names the XML encoding; problem lines are bounded and
     characters the console cannot show are escaped; a closed output pipe ends quietly with
     status 1, on Windows too; `main(["--help"])` and `main(["--version"])` return 0 instead of raising

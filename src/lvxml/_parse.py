@@ -44,11 +44,16 @@ def parse(text: str | bytes | bytearray | memoryview) -> Document:
         return Document((_node(root, VALUE_TAGS, "", 1),), wrapped=False, namespace=namespace)
     _no_text(root.text, "LVData")
     items: list[Node] = []
+    seen_value = False
     for child in root:
         _no_text(child.tail, "LVData")
         if _split(child.tag)[0] == "Version":
+            if seen_value:
+                # LabVIEW 2026 refuses a file whose <Version> comes after a value.
+                raise LVXMLError("<Version> must come before the values", "LVData")
             items.append(Node("Version", val=_leaf(child, "LVData/Version")))
         else:
+            seen_value = True
             items.append(_node(child, VALUE_TAGS, "LVData", 1))
     return Document(tuple(items), wrapped=True, namespace=namespace)
 
@@ -139,10 +144,15 @@ def _body(tag: str, name: str, kids: _Children) -> Node:
         choices = tuple(kids.take_all("Choice"))
         return Node(tag, name, val=kids.take("Val"), choices=choices)
     if tag == "Refnum":
-        # LabVIEW 2026 writes RefKind and RefType before <Val>; the XSD puts them after it.
+        # LabVIEW 2026 writes and reads RefKind and RefType only before <Val>; the XSD puts them
+        # after it.
         early = _kinds(kids)
         val = kids.take("Val")
-        return Node(tag, name, val=val, extra=early + _refnum_extra(kids, not early))
+        if kids.peek() in {"RefKind", "RefType"}:
+            raise LVXMLError(
+                "RefKind and RefType go before <Val>; LabVIEW 2026 refuses them after", kids.path
+            )
+        return Node(tag, name, val=val, extra=early + _refnum_extra(kids))
     if tag == "Array":
         dims = tuple(_count(text, f"{kids.path}/Dimsize") for text in kids.take_all("Dimsize"))
         return Node(tag, name, dims=dims, items=kids.rest(ARRAY_ITEM_TAGS))
@@ -161,8 +171,8 @@ def _kinds(kids: _Children) -> tuple[tuple[str, str], ...]:
     return kind + ((("RefType", kids.take("RefType")),) if kids.peek() == "RefType" else ())
 
 
-def _refnum_extra(kids: _Children, kinds: bool) -> tuple[tuple[str, str], ...]:
-    extra: list[tuple[str, str]] = list(_kinds(kids)) if kinds else []
+def _refnum_extra(kids: _Children) -> tuple[tuple[str, str], ...]:
+    extra: list[tuple[str, str]] = []
     for group, fields in (("ActiveXType", ("GUID", "Name")), ("DotNetType", ("Name",))):
         if kids.peek() != group:
             continue
@@ -177,7 +187,7 @@ def _refnum_extra(kids: _Children, kinds: bool) -> tuple[tuple[str, str], ...]:
 
 
 def _count(text: str, path: str) -> int:
-    stripped = text.strip()
+    stripped = text.strip(" ")
     if not stripped.isdigit() or not stripped.isascii():
         raise LVXMLError(f"expected a non-negative integer, got {quote(text)}", path)
     return int(stripped)

@@ -5,7 +5,8 @@
 #   save: set a control of a VI that writes an XML file, run it, copy the file LabVIEW wrote.
 #   load: put an input file where a VI reads its XML, run it, record the indicator values.
 # Every file a job touches is backed up first and restored (or removed) at the end, and every
-# VI is hashed before and after: nothing is saved back.
+# VI is hashed before and after: nothing is saved back. LabVIEW itself refreshes its own
+# dependency cache and internal reports under Documents\LabVIEW Data whenever it starts.
 #
 #   pwsh scripts/capture-labview-xml.ps1 -Jobs jobs.json -OutDir tests/fixtures/labview2026
 #
@@ -99,4 +100,4 @@ try {
 foreach ($vi in $hashes.Keys) {
     if ((Get-FileHash $vi).Hash -ne $hashes[$vi]) { throw "$vi changed on disk" }
 }
-"every VI is unchanged and every touched file is restored"
+"every VI is unchanged and every file a job touched is restored"
