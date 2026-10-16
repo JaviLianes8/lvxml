@@ -10,9 +10,33 @@ Progress:
 - [x] Docs: README, GUIDE, CHANGELOG (items 11, 12)
 - [x] Packaging, e2e and upgrade from PyPI 0.2.1 (items 8, 10, 13, 14)
 - [x] Five QA lenses report PASS (item 19): a round 3, b round 2, c round 2, d round 2, e round 6
-- [ ] Independent reviewer (item 16)
-- [ ] Gates (item 15)
-- [ ] PR open and trace guard CLEAN (item 17); merge and publish left to the maintainer
+- [x] Independent reviewer (item 16): review 1 FAIL, review 2 PASS at f968916
+- [x] Gates (item 15)
+- [x] PR #4 open and trace guard CLEAN (item 17); merge and publish left to the maintainer
+
+## Scorecard
+
+| # | Item | Verdict | Evidence |
+| --- | --- | --- | --- |
+| 1 | API reviewed for stability | PASS | the fifteen 0.2.1 names keep their parameters and defaults, `Schema` and `Value` added; every change in CHANGELOG 1.0.0 and the guide's upgrade list, confirmed against PyPI 0.2.1 by the author, lens a (about 150 calls) and lens d (221 behaviours) |
+| 2 | `__all__` exact | PASS | `tests/test_contract.py::test_all_lists_exactly_the_public_api` (17 names) |
+| 3 | Docstrings with runnable examples | PASS | every public name has `>>>`; `tests/test_docs.py` runs every module's doctests, the README and GUIDE `pycon` blocks and the guide's command transcripts |
+| 4 | Typed end to end | PASS | `mypy --strict src tests` clean; `py.typed` shipped; strict consumer of every public name (lens a) |
+| 5 | Typed, documented, safe errors | PASS | GUIDE error table and limits; values quoted to 40 characters, `str()` of an error and CLI lines bounded, control characters escaped on the command line (lens c) |
+| 6 | Contract asserts the full promise | PASS | 573 tests: a promise per public name, LabVIEW 2026 ground truth, fuzz, hostile input, wheel end-to-end, and the contracts from the author, lens and reviewer mutation rounds |
+| 7 | Real ground truth | PASS | files LabVIEW 2026 wrote and values it read back (`tests/fixtures/labview2026`, 7 save and 31 load jobs, scripts committed); the shipped XSD restored locally by manifest; lens b re-derived with 103 more LabVIEW runs |
+| 8 | Real e2e incl. PyPI upgrade | PASS | wheel in a throwaway venv driven by subprocess (`tests/test_e2e_installed.py`); PyPI 0.2.1 upgraded in place, every difference documented |
+| 9 | Seeded fuzz, no crash, hang or blow-up | PASS | `tests/test_fuzz.py` and linear-time contracts; lens c 274,346 calls and 33 scaling series; lens e 26 hostile markup shapes linear |
+| 10 | Every interpreter | PASS | 3.10.19, 3.11.5, 3.12.12, 3.13.2, 3.14.2, 3.14.2t at f7cbb81 (sdist suite against the wheel) |
+| 11 | README | PASS | `twine check --strict` PASSED; absolute links; problem, verified why, install, quick start, GUIDE and CHANGELOG links |
+| 12 | CHANGELOG dated 1.0.0 | PASS | `## [1.0.0] - 2026-10-16` |
+| 13 | pyproject | PASS | 1.0.0, Production/Stable, 3.10 to 3.14, MIT, Homepage/Source/Issues/Changelog, keywords, no runtime dependencies (`tests/test_packaging.py`) |
+| 14 | sdist and wheel contents | PASS | wheel: package, `py.typed`, LICENSE; sdist: source, tests and our fixtures, capture scripts, docs; NI's schema never shipped |
+| 15 | Gates exit 0 alone | PASS | each alone on a fresh clone at f968916 (review 2): format, lint, `mypy --strict src`, `pytest` 533 passed, 40 skipped (the XSD checks) |
+| 16 | Independent reviewer | PASS | review 1 FAIL, review 2 PASS at f968916 |
+| 17 | PR, trace guard | ready | PR #4 from `release/1.0.0`, trace guard CLEAN; merge and PyPI publish left to the maintainer |
+| 18 | Mutation round | PASS | author: 36, 5 survivors closed by contracts; lens e (blind, six rounds): 118 + 32 + 30 + 32 + 30, every survivor closed by a contract or argued equivalent; reviewer: 40, 2 equivalent, 8 closed by contracts |
+| 19 | Five QA lenses | PASS | a (round 3), b (round 2), c (round 2), d (round 2), e (round 6) |
 
 ## Baseline on 0.2.1 (before any change)
 
@@ -180,3 +204,17 @@ and swept at most 40 new mutations on the code changed since.
 | Review | Head | Verdict | Findings and outcome |
 | --- | --- | --- | --- |
 | 1 | 3d84972 | FAIL (1 medium, 3 low) | the four gates each alone on a fresh clone on Elena's PC (520 passed, 40 skipped); items 1 to 5, 7 to 15 and 19 PASS; house rules PASS. Its own 40 mutations on the code changed on the branch: 30 killed, 2 equivalent (`_empty_rows` is only reached when a size is 0; every text codec that encodes "x" decodes it back), 8 survivors (private-use character U+E000 not hidden, BOM before the declaration, white space in counts, complex separator, empty shape past the count limit, tab indent, CLI cut marker, cluster keys of mixed types). Low: input count in this report (31, not 34), stale interpreter counts, `LVXMLError.path` kept whole. Contracts added in `tests/test_contract_review.py` (f7cbb81); report refreshed |
+| 2 | f968916 | PASS | the four gates each alone on a fresh clone (533 passed, 40 skipped); the eight survivors re-applied, each killed by `tests/test_contract_review.py`; source unchanged since review 1; report accurate; house rules on the new commits PASS |
+
+## Decisions for the maintainer
+
+- LabVIEW 2026 is the authority where it disagrees with its shipped XSD: a refnum's `RefKind`
+  and `RefType` are read and written before `<Val>`, as LabVIEW does, and the XSD's order raises.
+- Where LabVIEW reads more than `lvxml` (SI suffixes, raw `<` in text, CDATA, attributes, an
+  enum index past its choices) `lvxml` refuses or reports rather than guess; it never reads a
+  different value from LabVIEW.
+- Bytes follow the XML declaration (UTF-8 when there is none) while LabVIEW always uses the
+  code page; the error says so, and the command line has `--encoding`.
+- `LVXMLError.path` keeps the whole location; `str()` of an error is bounded.
+- The README links to GUIDE.md and CHANGELOG.md on `main`, so publish after the merge.
+- GUIDE.md and this report are longer than 200 lines; the limit applies to source files.
