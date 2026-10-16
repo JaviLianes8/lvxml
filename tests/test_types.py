@@ -88,7 +88,7 @@ def test_decimal_point_is_never_localized() -> None:
         (1e39, "SGL", "single precision"),
         ("1", "CDB", "expects a number"),
         (1, "Path", "expects a str"),
-        (1.0, "FXP", "unsupported LabVIEW type tag"),
+        (1.0, "FXP", "unknown scalar tag"),
         ({"x": 1.0, "y": 2.0}, Cluster({"x": "DBL"}), "unknown fields"),
     ],
 )

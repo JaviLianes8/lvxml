@@ -8,6 +8,7 @@ from ._node import Node
 from ._numbers import parse_bool, parse_complex, parse_float, parse_int
 from ._parse import parse
 from ._schema import COMPLEX_TAGS, ENUM_RANGES, FLOAT_TAGS, INT_RANGES, Value
+from ._text import quote
 from ._treejson import check_shape
 
 
@@ -78,7 +79,7 @@ def _cluster(node: Node, path: str) -> dict[str, Value]:
     for item in node.items:
         if item.name in fields:
             raise LVXMLError(
-                f"duplicate field name {item.name!r} cannot map to a dict; "
+                f"duplicate field name {quote(item.name)} cannot map to a dict; "
                 "use lvxml.parse for positional access",
                 path,
             )

@@ -14,6 +14,7 @@ from ._schema import (
     SIMPLE_TAGS,
     VALUE_TAGS,
 )
+from ._text import join, quote, segment
 
 # Deeper nesting than this is refused rather than exhausting the interpreter's stack.
 MAX_DEPTH = 100
@@ -29,7 +30,8 @@ def parse(text: str | bytes) -> Document:
     for element in root.iter():
         if _split(element.tag)[1] != namespace:
             where = _split(element.tag)[0]
-            raise LVXMLError(f"<{where}> is not in the root element's namespace {namespace!r}")
+            ns = quote(namespace)
+            raise LVXMLError(f"<{segment(where)}> is not in the root element's namespace {ns}")
     _no_attributes(root, tag)
     if tag != "LVData":
         return Document((_node(root, VALUE_TAGS, "", 1),), wrapped=False, namespace=namespace)
@@ -53,12 +55,12 @@ def _split(tag: str) -> tuple[str, str | None]:
 
 def _no_attributes(element: ET.Element, path: str) -> None:
     if element.attrib:
-        raise LVXMLError(f"unexpected attributes {sorted(element.attrib)}", path)
+        raise LVXMLError(f"unexpected attributes {quote(sorted(element.attrib))}", path)
 
 
 def _no_text(text: str | None, path: str) -> None:
     if text is not None and text.strip():
-        raise LVXMLError(f"unexpected text {text.strip()[:40]!r}", path)
+        raise LVXMLError(f"unexpected text {quote(text.strip())}", path)
 
 
 def _leaf(element: ET.Element, path: str) -> str:
@@ -85,7 +87,7 @@ class _Children:
 
     def take(self, tag: str) -> str:
         if self.peek() != tag:
-            found = f"<{self.peek()}>" if self.peek() else "the end of the element"
+            found = f"<{segment(self.peek() or '')}>" if self.peek() else "the end of the element"
             raise LVXMLError(f"expected <{tag}>, found {found}", self.path)
         self.pos += 1
         return _leaf(self.kids[self.pos - 1], f"{self.path}/{tag}")
@@ -103,21 +105,21 @@ class _Children:
 
     def end(self) -> None:
         if self.pos < len(self.kids):
-            raise LVXMLError(f"unexpected <{self.peek()}>", self.path)
+            raise LVXMLError(f"unexpected <{segment(self.peek() or '')}>", self.path)
 
 
 def _node(element: ET.Element, allowed: frozenset[str], parent: str, depth: int) -> Node:
     tag = _split(element.tag)[0]
-    here = f"{parent}/{tag}" if parent else tag
+    here = join(parent, segment(tag))
     if depth > MAX_DEPTH:
         raise LVXMLError(f"nesting deeper than {MAX_DEPTH} levels is not supported", here)
     if tag not in allowed:
         where = f"inside <{parent.rsplit('/', 1)[-1]}>" if parent else "as a root element"
-        raise LVXMLError(f"<{tag}> is not allowed {where} by LVXMLSchema.xsd", here)
+        raise LVXMLError(f"<{segment(tag)}> is not allowed {where} by LVXMLSchema.xsd", here)
     _no_attributes(element, here)
     kids = _Children(element, here, depth)
     name = kids.take("Name")
-    kids.path = f"{here}[{name}]" if name else here
+    kids.path = join(parent, segment(tag, name))
     node = _body(tag, name, kids)
     kids.end()
     return node
@@ -170,5 +172,5 @@ def _refnum_extra(kids: _Children, kinds: bool) -> tuple[tuple[str, str], ...]:
 def _count(text: str, path: str) -> int:
     stripped = text.strip()
     if not stripped.isdigit() or not stripped.isascii():
-        raise LVXMLError(f"expected a non-negative integer, got {text!r}", path)
+        raise LVXMLError(f"expected a non-negative integer, got {quote(text)}", path)
     return int(stripped)

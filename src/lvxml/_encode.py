@@ -17,6 +17,7 @@ from ._schema import (
     Schema,
     Value,
 )
+from ._text import quote
 
 
 def to_lv_xml(value: Value, schema: Schema, name: str = "") -> str:
@@ -78,13 +79,14 @@ def _scalar_text(value: Value, tag: str, path: str) -> str:
         if not isinstance(value, str):
             raise LVXMLError(f"{tag} expects a str, got {_kind(value)}", path)
         return value
-    raise LVXMLError(f"unknown or unsupported LabVIEW type tag {tag!r}", path)
+    raise LVXMLError(f"unknown scalar tag {quote(tag)}", path)
 
 
 def _enum_index(value: Value, schema: LVEnum, path: str) -> int:
     if isinstance(value, str):
         if value not in schema.choices:
-            raise LVXMLError(f"{value!r} is not one of the choices {list(schema.choices)}", path)
+            choices = quote(list(schema.choices))
+            raise LVXMLError(f"{quote(value)} is not one of the choices {choices}", path)
         return schema.choices.index(value)
     if isinstance(value, bool) or not isinstance(value, int):
         raise LVXMLError(f"{schema.tag} expects a choice label or index, got {_kind(value)}", path)
@@ -98,11 +100,11 @@ def _encode_cluster(value: Value, schema: Cluster, name: str, path: str) -> Node
         raise LVXMLError(f"Cluster expects a dict, got {_kind(value)}", path)
     extra = set(value) - set(schema.fields)
     if extra:
-        raise LVXMLError(f"cluster value has unknown fields {sorted(extra)}", path)
+        raise LVXMLError(f"cluster value has unknown fields {quote(sorted(extra, key=str))}", path)
     items: list[Node] = []
     for field_name, field_schema in schema.fields.items():
         if field_name not in value:
-            raise LVXMLError(f"missing cluster field {field_name!r}", path)
+            raise LVXMLError(f"missing cluster field {quote(field_name)}", path)
         items.append(_encode(value[field_name], field_schema, field_name, f"{path}.{field_name}"))
     return Node("Cluster", name, num_elts=len(items), items=tuple(items))
 
@@ -155,4 +157,4 @@ def _default(schema: Schema) -> Value:
         return False
     if schema in TEXT_TAGS:
         return ""
-    raise LVXMLError(f"unknown or unsupported LabVIEW type tag {schema!r}")
+    raise LVXMLError(f"unknown scalar tag {quote(schema)}")

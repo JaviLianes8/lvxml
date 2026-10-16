@@ -10,6 +10,7 @@ from ._node import Document, Node
 from ._numbers import parse_bool, parse_complex, parse_float, parse_int
 from ._parse import parse
 from ._schema import COMPLEX_TAGS, ENUM_RANGES, FLOAT_TAGS, INT_RANGES
+from ._text import join, segment
 
 # An empty array with leading non-zero sizes (such as 1000x0) decodes to nested empty lists;
 # more than this many is refused so a tiny input cannot demand unbounded memory.
@@ -73,8 +74,7 @@ def _check_val(node: Node) -> None:
 
 
 def child_path(parent: str, node: Node) -> str:
-    here = f"{parent}/{node.tag}" if parent else node.tag
-    return f"{here}[{node.name}]" if node.name else here
+    return join(parent, segment(node.tag, node.name))
 
 
 def walk(node: Node, parent: str) -> Iterator[tuple[str, Node]]:
