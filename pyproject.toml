@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "lvxml"
-version = "0.2.1"
+version = "1.0.0"
 description = "Codec for LabVIEW Flatten To XML / Unflatten From XML between its fixed schema and native Python values"
 readme = "README.md"
 requires-python = ">=3.10"

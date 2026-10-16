@@ -11,7 +11,7 @@ from ._node import LVDATA_NAMESPACE, Document, Node
 from ._parse import parse
 from ._schema import Array, Cluster, LVEnum
 
-__version__ = "0.2.1"
+__version__ = "1.0.0"
 
 __all__ = [
     "LVDATA_NAMESPACE",
