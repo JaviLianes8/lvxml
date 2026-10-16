@@ -47,6 +47,11 @@ LabVIEW 2026 writes and reads (see the guide, "What each rule rests on").
   that is not a text encoding as a usage mistake, ends quietly on a closed pipe; `main` returns 0
   for `--help` and `--version`.
 
+### Fixed
+
+- `tests/fixtures/ni/MANIFEST.json` is valid JSON again, so `scripts/capture_ni.py` restores
+  NI's schema for the schema tests.
+
 ### Added
 
 - `lvxml.Schema` and `lvxml.Value`, the schema and value types for annotations.

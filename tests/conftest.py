@@ -39,6 +39,8 @@ def _wheel(tmp_path_factory: pytest.TempPathFactory) -> Path:
         return Path(given)
     if not (ROOT / "src" / "lvxml" / "__init__.py").is_file():
         pytest.skip("no source tree to build from; set LVXML_WHEEL to a built wheel")
+    if importlib.util.find_spec("pip") is None:
+        pytest.skip("pip is needed to build the wheel; set LVXML_WHEEL to a built wheel")
     wheels = tmp_path_factory.mktemp("wheels")
     build = [sys.executable, "-m", "pip", "wheel", "--quiet", "--no-deps"]
     if importlib.util.find_spec("hatchling") is not None:
