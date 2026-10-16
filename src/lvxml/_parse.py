@@ -130,7 +130,10 @@ def _body(tag: str, name: str, kids: _Children) -> Node:
         choices = tuple(kids.take_all("Choice"))
         return Node(tag, name, val=kids.take("Val"), choices=choices)
     if tag == "Refnum":
-        return Node(tag, name, val=kids.take("Val"), extra=_refnum_extra(kids))
+        # LabVIEW 2026 writes RefKind and RefType before <Val>; the XSD puts them after it.
+        early = _kinds(kids)
+        val = kids.take("Val")
+        return Node(tag, name, val=val, extra=early + _refnum_extra(kids, not early))
     if tag == "Array":
         dims = tuple(_count(text, f"{kids.path}/Dimsize") for text in kids.take_all("Dimsize"))
         return Node(tag, name, dims=dims, items=kids.rest(ARRAY_ITEM_TAGS))
@@ -142,12 +145,15 @@ def _body(tag: str, name: str, kids: _Children) -> Node:
     return Node(tag, name, items=kids.rest(VALUE_TAGS))  # LvVariant
 
 
-def _refnum_extra(kids: _Children) -> tuple[tuple[str, str], ...]:
-    extra: list[tuple[str, str]] = []
-    if kids.peek() == "RefKind":
-        extra.append(("RefKind", kids.take("RefKind")))
-        if kids.peek() == "RefType":
-            extra.append(("RefType", kids.take("RefType")))
+def _kinds(kids: _Children) -> tuple[tuple[str, str], ...]:
+    if kids.peek() != "RefKind":
+        return ()
+    kind = (("RefKind", kids.take("RefKind")),)
+    return kind + ((("RefType", kids.take("RefType")),) if kids.peek() == "RefType" else ())
+
+
+def _refnum_extra(kids: _Children, kinds: bool) -> tuple[tuple[str, str], ...]:
+    extra: list[tuple[str, str]] = list(_kinds(kids)) if kinds else []
     for group, fields in (("ActiveXType", ("GUID", "Name")), ("DotNetType", ("Name",))):
         if kids.peek() != group:
             continue

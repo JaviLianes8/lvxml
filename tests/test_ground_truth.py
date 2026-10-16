@@ -7,7 +7,7 @@ from pathlib import Path
 from xml.etree import ElementTree as ET
 
 import pytest
-from conftest import REAL_FILES, SCHEMA_FILES, XSD, read
+from conftest import FIXTURES, REAL_FILES, SCHEMA_FILES, XSD, read
 from xsd_check import requires_xsd, xsd_valid, xsd_valid_raw
 
 import lvxml
@@ -71,14 +71,25 @@ def test_a_labview_written_file_round_trips_byte_for_byte(path: Path) -> None:
 def test_every_fixture_round_trips_canonically(path: Path) -> None:
     raw = read(path)
     written = lvxml.dump(lvxml.parse(raw))
-    assert _canonical(written) == _canonical(raw)
     assert lvxml.parse(written) == lvxml.parse(raw)
+    if "<RefKind>" not in raw:  # dump moves RefKind before <Val>, where LabVIEW writes it
+        assert _canonical(written) == _canonical(raw)
 
 
 @requires_xsd
 @pytest.mark.parametrize("path", ALL_FILES, ids=lambda p: p.name)
 def test_every_rewritten_fixture_is_valid_against_the_xsd(path: Path) -> None:
-    assert xsd_valid(lvxml.dump(lvxml.parse(read(path))))
+    written = lvxml.dump(lvxml.parse(read(path)))
+    assert xsd_valid(written) == ("<RefKind>" not in written)
+
+
+@requires_xsd
+def test_labview_writes_refkind_before_val_against_its_own_xsd() -> None:
+    raw = (FIXTURES / "labview2026" / "save-cont-paths.xml").read_bytes().decode("cp1252")
+    kind = "<RefKind>TDMS File</RefKind>\r\n"
+    assert kind + "<Val>0x00000000</Val>" in raw
+    assert not xsd_valid(raw)
+    assert xsd_valid(raw.replace(kind, ""))
 
 
 @pytest.mark.parametrize("path", ALL_FILES, ids=lambda p: p.name)

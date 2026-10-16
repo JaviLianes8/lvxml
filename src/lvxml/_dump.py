@@ -13,6 +13,7 @@ DECLARATION = "<?xml version='1.0' standalone='yes' ?>"
 
 # Text no XML document can hold. LabVIEW writes other control characters raw, and so does
 # dump, so that a file LabVIEW wrote comes back byte for byte.
+_KINDS = ("RefKind", "RefType")
 _ILLEGAL = re.compile("[\ud800-\udfff\ufffe\uffff]")
 
 
@@ -79,9 +80,12 @@ def _write(node: Node, lines: list[str], indent: str, depth: int, xmlns: str) ->
     lines.append(f"{pad}<{node.tag}{xmlns}>")
     lines.append(_leaf("Name", node.name, inner))
     lines.extend(_leaf("Choice", choice, inner) for choice in node.choices)
+    # RefKind and RefType go before <Val>, where LabVIEW 2026 writes them.
+    kinds = tuple(pair for pair in node.extra if pair[0] in _KINDS)
+    lines.extend(_leaf(key, text, inner) for key, text in kinds)
     if node.val is not None:
         lines.append(_leaf("Val", node.val, inner))
-    _write_extra(node.extra, lines, inner, indent)
+    _write_extra(node.extra[len(kinds) :], lines, inner, indent)
     lines.extend(_leaf("Dimsize", str(dim), inner) for dim in node.dims)
     if node.num_elts is not None:
         lines.append(_leaf("NumElts", str(node.num_elts), inner))
