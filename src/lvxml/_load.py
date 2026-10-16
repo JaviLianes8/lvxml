@@ -20,7 +20,7 @@ _HIDDEN = re.compile("[\x00-\x08\x0b\x0c\x0e-\x1f\ue000-\ue020]")
 _SHOWN = re.compile("\ue000([\ue001-\ue041])")
 
 
-def decode(data: str | bytes) -> str:
+def decode(data: str | bytes | bytearray | memoryview) -> str:
     """Return `data` as text, decoding bytes by their XML declaration (default UTF-8).
 
     >>> decode(b"<?xml version='1.0' encoding='cp1252'?><a>\\xe9</a>")[-6:]

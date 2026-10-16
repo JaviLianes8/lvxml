@@ -12,7 +12,7 @@ from ._text import quote
 from ._treejson import check_shape
 
 
-def from_lv_xml(text: str | bytes) -> Value:
+def from_lv_xml(text: str | bytes | bytearray | memoryview) -> Value:
     """Parse LabVIEW flattened XML into the Python value of its first value element.
 
     Inside an ``<LVData>`` file wrapper the ``<Version>`` header is skipped; use
@@ -31,7 +31,7 @@ def from_lv_xml(text: str | bytes) -> Value:
     return _value(document.values[0], root)
 
 
-def from_lv_xml_all(text: str | bytes) -> list[Value]:
+def from_lv_xml_all(text: str | bytes | bytearray | memoryview) -> list[Value]:
     """Parse LabVIEW flattened XML into the Python values of every value element, in order.
 
     >>> from_lv_xml_all(

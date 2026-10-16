@@ -20,7 +20,7 @@ from ._text import join, quote, segment
 MAX_DEPTH = 100
 
 
-def parse(text: str | bytes) -> Document:
+def parse(text: str | bytes | bytearray | memoryview) -> Document:
     """Parse LabVIEW Flatten-To-XML, bare or inside ``<LVData>``, into a `Document`.
 
     Bytes are decoded by the encoding their XML declaration names, or as UTF-8. Text

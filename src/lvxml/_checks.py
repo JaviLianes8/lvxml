@@ -85,7 +85,7 @@ def walk(node: Node, parent: str) -> Iterator[tuple[str, Node]]:
         yield from walk(item, path)
 
 
-def validate(text: str | bytes) -> list[str]:
+def validate(text: str | bytes | bytearray | memoryview) -> list[str]:
     """Return every problem found in LabVIEW XML `text`; an empty list means it is valid.
 
     A document that does not have the shape LVXMLSchema.xsd defines yields one problem,
