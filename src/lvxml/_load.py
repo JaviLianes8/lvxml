@@ -8,9 +8,10 @@ from xml.etree import ElementTree as ET
 from ._errors import LVXMLError
 from ._text import quote
 
-# A tag ends at the first ">" outside a quoted attribute value; XML allows no "<" inside a tag,
-# so every scan stops at the next "<" and the split stays linear.
-_MARKUP = re.compile(r"""(<(?:[^<>"']|"[^<"]*"|'[^<']*')*>)""")
+# Markup is a comment, a processing instruction, or a tag that ends at the first ">" outside a
+# quoted attribute value. XML allows no "<" inside a tag, so a tag scan stops at the next "<";
+# comments and instructions are checked to be closed first, so their scans always end.
+_MARKUP = re.compile(r"""(<!--.*?-->|<\?.*?\?>|<(?:[^<>"']|"[^<"]*"|'[^<']*')*>)""", re.S)
 _DECLARATION = re.compile(r"\A\ufeff?\s*<\?xml\b[^>]*\?>")
 _ENCODING = re.compile(rb"\A\s*<\?xml\b[^>]*\bencoding\s*=\s*[\"']([A-Za-z0-9._-]+)[\"']")
 # LabVIEW decodes only these three entities; any other ampersand is literal text to it.
@@ -65,6 +66,8 @@ def load(text: str) -> ET.Element:
         raise LVXMLError("CDATA sections are not supported; LabVIEW escapes text instead")
     # The text is already decoded, so an encoding named in the declaration must not apply.
     body = _DECLARATION.sub("", text, count=1)
+    if body.rfind("<!--") > body.rfind("-->") or body.rfind("<?") > body.rfind("?>"):
+        raise LVXMLError("invalid XML: a comment or processing instruction is never closed")
     body = _hide(_literal_ampersands(body))
     try:
         root = ET.fromstring(_keep_carriage_returns(body))
