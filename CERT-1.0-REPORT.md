@@ -40,7 +40,7 @@ through its ActiveX VI Server. `scripts/capture-labview-xml.ps1` runs shipped VI
   control characters.
 - **Values LabVIEW read** (`load-*.json` from `inputs/*.xml`): "Load Configuration Settings
   from XML" (Boolean, enums, strings, nested clusters) and the shipped example "Read from XML
-  File and Unflatten Data" (DBL) read 34 hand-written or `lvxml`-written inputs; the indicator
+  File and Unflatten Data" (DBL) read 31 hand-written or `lvxml`-written inputs; the indicator
   values were read back over ActiveX.
 - The 0.2.1 fixture `tests/fixtures/real/example-flattened-xml-file.xml` (shipped example
   "Flatten Data and Write to XML File") and NI's `LVXMLSchema.xsd` from the install (local
@@ -125,26 +125,29 @@ contracts in `tests/test_contract_author.py` (re-applied at 54a9e59, all killed)
 
 ## Packaging, interpreters and upgrade (items 8, 10, 11, 13, 14)
 
-On this PC at b5e37da, from a fresh clone: `python -m build`, `twine check --strict` PASSED
-for both archives, `check-wheel-contents` OK. Wheel: the package, `py.typed`, LICENSE and
-metadata only. Sdist: source, tests with their fixtures (LabVIEW captures and inputs, the
-NI manifest without the schema), the capture scripts and the docs. The sdist suite with
-`src` removed, run against the installed wheel (the wheel end-to-end tests included):
+On this PC at f7cbb81 (the final code), from a fresh clone: `python -m build`,
+`twine check --strict` PASSED for both archives, `check-wheel-contents` OK. Wheel: the
+package, `py.typed`, LICENSE and metadata only. Sdist: source, tests with their fixtures
+(LabVIEW captures and inputs, the NI manifest without the schema), the capture scripts and the
+docs. The sdist suite with `src` removed, run against the installed wheel (the wheel
+end-to-end tests included):
 
 | Python | Result |
 | --- | --- |
-| 3.10.19 | 360 passed, 40 skipped |
-| 3.11.5, 3.12.12, 3.13.2, 3.14.2, 3.14.2 free-threaded | 361 passed, 39 skipped each |
+| 3.10.19 | 532 passed, 41 skipped |
+| 3.11.5, 3.12.12, 3.13.2, 3.14.2, 3.14.2 free-threaded | 533 passed, 40 skipped each |
 
-Skips: the XSD checks (NI's schema is not shipped) and one metadata test that needs
+Skips: the XSD checks (NI's schema is not shipped; with it restored by
+`scripts/capture_ni.py` they run and pass, lens d round 2) and one metadata test that needs
 `tomllib` on 3.10. No interpreter from 3.10 up on this PC was left out.
 
 Upgrade: `pip install lvxml==0.2.1` from PyPI into a fresh venv, a 30-call battery, the 1.0.0
-wheel installed over it with `--upgrade`, the battery again: 10 results identical, 20
-different, each one a change in the list above (version, entities, lone `&`, control
-characters, Boolean `true` and `2`, `Infinity`, refnum order read and written, code page
-hint, `memoryview`, schema, node and `dump` checks, raw control characters written, bounded
-message, error module).
+wheel (f7cbb81) installed over it with `--upgrade`, the battery again: 9 results identical, 21
+different, each one a documented change (version, the two new names, entities, lone `&`,
+control characters, Boolean `true` and `2`, `Infinity`, refnum order read and written, code
+page hint, `memoryview`, schema, node and `dump` checks, raw control characters written,
+bounded message, error module). Lens d compared 221 behaviours the same way at 44836e2: 93
+differences, all documented.
 
 ## Independent QA lenses (item 19)
 
@@ -170,3 +173,9 @@ and swept at most 40 new mutations on the code changed since.
 | e. Contract strength | 4 | 94d0456 | FAIL | 32 new: 14 survivors; the unclosed-comment check refused an opener inside other markup. Replaced by one ordered linear markup scanner in 9af4ca4 (`tests/test_contract_markup.py`, `tests/test_contract_markup_two.py`) |
 | e. Contract strength | 5 | 9af4ca4 | FAIL | 30 new on the scanner: 22 killed, 2 equivalent, 6 survivors; no defect; `load()` linear on 26 hostile shapes. Contracts added in c6f79c7 |
 | e. Contract strength | 6 | c6f79c7 | PASS | the six survivors killed; every mutant of rounds 1 to 5 killed or argued equivalent |
+
+## Independent reviewer (item 16)
+
+| Review | Head | Verdict | Findings and outcome |
+| --- | --- | --- | --- |
+| 1 | 3d84972 | FAIL (1 medium, 3 low) | the four gates each alone on a fresh clone on Elena's PC (520 passed, 40 skipped); items 1 to 5, 7 to 15 and 19 PASS; house rules PASS. Its own 40 mutations on the code changed on the branch: 30 killed, 2 equivalent (`_empty_rows` is only reached when a size is 0; every text codec that encodes "x" decodes it back), 8 survivors (private-use character U+E000 not hidden, BOM before the declaration, white space in counts, complex separator, empty shape past the count limit, tab indent, CLI cut marker, cluster keys of mixed types). Low: input count in this report (31, not 34), stale interpreter counts, `LVXMLError.path` kept whole. Contracts added in `tests/test_contract_review.py` (f7cbb81); report refreshed |
