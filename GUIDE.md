@@ -51,7 +51,8 @@ read it through the typed tree instead.
 
 Text is read the way LabVIEW reads it: only `&lt;`, `&gt;` and `&amp;` are entities, so
 `&quot;`, `&#13;` or a lone `&` stay as written, carriage returns are kept, and control
-characters, which LabVIEW writes raw although XML 1.0 forbids them, are read as they are.
+characters, which LabVIEW writes raw although XML 1.0 forbids them, are read as they are. The
+namespace, an attribute value, keeps XML's own entity rules.
 
 ```pycon
 >>> from_lv_xml("<String><Name>s</Name><Val>a &amp; &quot;b&quot; & c</Val></String>")
