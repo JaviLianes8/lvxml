@@ -4,6 +4,8 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 
+from ._fields import check_document, check_node
+
 # The namespace LabVIEW's XML file writer puts on <LVData>.
 LVDATA_NAMESPACE = "http://www.ni.com/LVData"
 
@@ -18,7 +20,13 @@ class Node:
     array, cluster, variant, timestamp or waveform. `extra` keeps a ``Refnum``'s optional
     ``RefKind``, ``RefType``, ``ActiveXType.GUID``, ``ActiveXType.Name`` and
     ``DotNetType.Name`` fields in document order. A ``Version`` header inside
-    ``<LVData>`` is a node with tag ``"Version"`` and its text in `val`.
+    ``<LVData>`` is a node with tag ``"Version"`` and its text in `val`. Fields are type
+    checked when a node is built (`TypeError`), lists are stored as tuples, and whether the
+    fields suit the tag is checked by `dump` and `to_value` (`LVXMLError`).
+
+    >>> node = Node("DBL", "x", val="1.5")
+    >>> Node.from_dict(node.to_dict()) == node
+    True
     """
 
     tag: str
@@ -29,6 +37,9 @@ class Node:
     num_elts: int | None = None
     items: tuple[Node, ...] = ()
     extra: tuple[tuple[str, str], ...] = ()
+
+    def __post_init__(self) -> None:
+        check_node(self)
 
     def to_dict(self) -> dict[str, object]:
         """Return a JSON-ready dict that `Node.from_dict` turns back into this node."""
@@ -51,12 +62,21 @@ class Document:
     `wrapped` is true for the ``<LVData>`` file form, whose `items` may include
     ``Version`` nodes; otherwise the document is the bare output of Flatten To XML and
     `items` holds exactly one node. `namespace` is the default XML namespace of the root
-    element, or ``None`` when it has none.
+    element, or ``None`` when it has none (`LVDATA_NAMESPACE` is LabVIEW's).
+
+    >>> document = Document((Node("Version", val="26.3.1f1"), Node("I8", "n", val="1")))
+    >>> document.version, [node.tag for node in document.values]
+    ('26.3.1f1', ['I8'])
+    >>> document.namespace == LVDATA_NAMESPACE
+    True
     """
 
     items: tuple[Node, ...]
     wrapped: bool = True
     namespace: str | None = LVDATA_NAMESPACE
+
+    def __post_init__(self) -> None:
+        check_document(self)
 
     @property
     def version(self) -> str | None:
@@ -83,3 +103,6 @@ class Document:
         from ._treejson import document_from_dict
 
         return document_from_dict(data)
+
+
+Node.__module__ = Document.__module__ = "lvxml"

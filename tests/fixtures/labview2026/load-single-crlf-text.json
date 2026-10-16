@@ -1,0 +1,19 @@
+{
+  "job": "load-single-crlf-text",
+  "finished": true,
+  "User Configuration out": [
+    [
+      "a\r\nb\rc\nd",
+      1
+    ],
+    [
+      true
+    ],
+    0
+  ],
+  "error out": [
+    false,
+    0,
+    ""
+  ]
+}

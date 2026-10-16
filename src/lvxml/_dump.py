@@ -11,8 +11,11 @@ from ._treejson import check_shape
 # The declaration LabVIEW's XML file writer emits before <LVData>.
 DECLARATION = "<?xml version='1.0' standalone='yes' ?>"
 
-# Characters XML 1.0 cannot carry at all, even escaped.
-_ILLEGAL = re.compile("[\x00-\x08\x0b\x0c\x0e-\x1f\ud800-\udfff\ufffe\uffff]")
+_KINDS = ("RefKind", "RefType")
+_NEWLINES = ("\r\n", "\n", "\r")
+# Text no XML document can hold. LabVIEW writes other control characters raw, and so does
+# dump, so that a file LabVIEW wrote comes back byte for byte.
+_ILLEGAL = re.compile("[\ud800-\udfff\ufffe\uffff]")
 
 
 def dump(
@@ -26,10 +29,28 @@ def dump(
 
     The defaults reproduce the layout of a file LabVIEW 2026 wrote: one element per line,
     CRLF line breaks, no indentation, empty elements written as ``<Name></Name>`` and no
-    line break after the last element. Only ``&``, ``<`` and ``>`` are escaped.
-    `declaration` defaults to true for an ``<LVData>`` document and false otherwise. A
-    `Node` is written bare, as Flatten To XML outputs it.
+    line break after the last element. Only ``&``, ``<`` and ``>`` are escaped and control
+    characters are written as they are, as LabVIEW does. `newline` is ``"\\r\\n"``,
+    ``"\\n"`` or ``"\\r"`` and `indent` holds only spaces and tabs. `declaration` defaults
+    to true for an ``<LVData>`` document and false otherwise. A `Node` is written bare, as
+    Flatten To XML outputs it. LabVIEW's file reader needs a ``Version`` node in an
+    ``<LVData>`` document.
+
+    >>> from lvxml import Node
+    >>> print(dump(Node("I32", "n", val="7"), newline="\\n"))
+    <I32>
+    <Name>n</Name>
+    <Val>7</Val>
+    </I32>
     """
+    if not isinstance(tree, (Document, Node)):
+        raise TypeError(f"dump takes a Document or a Node, not {type(tree).__name__}")
+    if newline not in _NEWLINES:
+        raise ValueError("newline must be '\\r\\n', '\\n' or '\\r'")
+    if not isinstance(indent, str) or indent.strip(" \t"):
+        raise ValueError("indent may hold only spaces and tabs")
+    if declaration is not None and not isinstance(declaration, bool):
+        raise TypeError("declaration must be a bool or None")
     document = tree if isinstance(tree, Document) else Document((tree,), False, None)
     if not document.wrapped and len(document.items) != 1:
         raise LVXMLError("a bare document holds exactly one value; set wrapped=True")
@@ -78,9 +99,12 @@ def _write(node: Node, lines: list[str], indent: str, depth: int, xmlns: str) ->
     lines.append(f"{pad}<{node.tag}{xmlns}>")
     lines.append(_leaf("Name", node.name, inner))
     lines.extend(_leaf("Choice", choice, inner) for choice in node.choices)
+    # RefKind and RefType go before <Val>, where LabVIEW 2026 writes them.
+    kinds = tuple(pair for pair in node.extra if pair[0] in _KINDS)
+    lines.extend(_leaf(key, text, inner) for key, text in kinds)
     if node.val is not None:
         lines.append(_leaf("Val", node.val, inner))
-    _write_extra(node.extra, lines, inner, indent)
+    _write_extra(node.extra[len(kinds) :], lines, inner, indent)
     lines.extend(_leaf("Dimsize", str(dim), inner) for dim in node.dims)
     if node.num_elts is not None:
         lines.append(_leaf("NumElts", str(node.num_elts), inner))

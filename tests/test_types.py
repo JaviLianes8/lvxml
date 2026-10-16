@@ -88,7 +88,7 @@ def test_decimal_point_is_never_localized() -> None:
         (1e39, "SGL", "single precision"),
         ("1", "CDB", "expects a number"),
         (1, "Path", "expects a str"),
-        (1.0, "FXP", "unsupported LabVIEW type tag"),
+        (1.0, "FXP", "unknown scalar tag"),
         ({"x": 1.0, "y": 2.0}, Cluster({"x": "DBL"}), "unknown fields"),
     ],
 )
@@ -105,8 +105,12 @@ def test_encoding_errors_carry_the_value_path() -> None:
 
 
 def test_unwritable_characters_raise() -> None:
-    with pytest.raises(LVXMLError, match="U\\+0000"):
-        to_lv_xml("a\x00b", "String")
+    with pytest.raises(LVXMLError, match="U\\+D800"):
+        to_lv_xml("a\ud800b", "String")
+
+
+def test_control_characters_are_written_raw_like_labview() -> None:
+    assert "<Val>a\x00\x07b</Val>" in to_lv_xml("a\x00\x07b", "String")
 
 
 @pytest.mark.parametrize(
@@ -154,5 +158,5 @@ def test_container_types_decode_to_lists_of_items() -> None:
 
 
 def test_refnum_decodes_to_its_val_text() -> None:
-    xml = "<Refnum><Name>q</Name><Val>0x0000002a</Val><RefKind>Queue</RefKind></Refnum>"
+    xml = "<Refnum><Name>q</Name><RefKind>Queue</RefKind><Val>0x0000002a</Val></Refnum>"
     assert from_lv_xml(xml) == "0x0000002a"

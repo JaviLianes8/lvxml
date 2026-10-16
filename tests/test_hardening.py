@@ -30,7 +30,7 @@ def _deep_clusters(depth: int) -> str:
 
 
 def test_huge_empty_shape_is_refused_quickly() -> None:
-    text = "<Array><Name></Name><Dimsize>99999999999999999999</Dimsize><Dimsize>0</Dimsize></Array>"
+    text = "<Array><Name></Name><Dimsize>9223372036854775807</Dimsize><Dimsize>0</Dimsize></Array>"
     started = time.perf_counter()
     with pytest.raises(LVXMLError, match="needs over 100000 lists"):
         from_lv_xml(text)
@@ -87,7 +87,7 @@ def test_unwritable_text_is_an_lvxml_error() -> None:
 def test_cli_reports_unencodable_output(tmp_path: Path, capsys: pytest.CaptureFixture[str]) -> None:
     tree = tmp_path / "t.json"
     tree.write_text(
-        json.dumps({"wrapped": False, "items": [{"tag": "String", "name": "s", "val": "日"}]}),
+        json.dumps({"wrapped": False, "items": [{"tag": "String", "name": "s", "val": "\u65e5"}]}),
         encoding="utf-8",
     )
     assert main(["to-xml", "--encoding", "cp1252", str(tree)]) == 1

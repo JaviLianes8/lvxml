@@ -1,5 +1,6 @@
 <?xml version='1.0' standalone='yes' ?>
 <LVData xmlns="http://www.ni.com/LVData">
+  <Version>26.3.1f1</Version>
   <Array>
     <Name>grid</Name>
     <Dimsize>2</Dimsize>

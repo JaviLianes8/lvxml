@@ -14,32 +14,48 @@ from ._schema import (
     SIMPLE_TAGS,
     VALUE_TAGS,
 )
+from ._text import join, quote, segment
 
 # Deeper nesting than this is refused rather than exhausting the interpreter's stack.
 MAX_DEPTH = 100
+MAX_DIMS = 100  # the most dimensions an array may have
+MAX_COUNT = 2**63 - 1  # the largest Dimsize or NumElts
 
 
-def parse(text: str | bytes) -> Document:
+def parse(text: str | bytes | bytearray | memoryview) -> Document:
     """Parse LabVIEW Flatten-To-XML, bare or inside ``<LVData>``, into a `Document`.
 
-    Bytes are decoded by the encoding their XML declaration names, or as UTF-8.
+    Bytes are decoded by the encoding their XML declaration names, or as UTF-8. Text
+    is read as LabVIEW reads it: only ``&lt;``, ``&gt;`` and ``&amp;`` are entities, and
+    carriage returns and control characters are kept.
+
+    >>> document = parse("<LVData><Version>26.3.1f1</Version>"
+    ...                  "<String><Name>s</Name><Val>a &quot;b&quot;</Val></String></LVData>")
+    >>> document.version, document.values[0].val
+    ('26.3.1f1', 'a &quot;b&quot;')
     """
     root = load(decode(text))
     tag, namespace = _split(root.tag)
     for element in root.iter():
         if _split(element.tag)[1] != namespace:
             where = _split(element.tag)[0]
-            raise LVXMLError(f"<{where}> is not in the root element's namespace {namespace!r}")
+            ns = quote(namespace)
+            raise LVXMLError(f"<{segment(where)}> is not in the root element's namespace {ns}")
     _no_attributes(root, tag)
     if tag != "LVData":
         return Document((_node(root, VALUE_TAGS, "", 1),), wrapped=False, namespace=namespace)
     _no_text(root.text, "LVData")
     items: list[Node] = []
+    seen_value = False
     for child in root:
         _no_text(child.tail, "LVData")
         if _split(child.tag)[0] == "Version":
+            if seen_value:
+                # LabVIEW 2026 refuses a file whose <Version> comes after a value.
+                raise LVXMLError("<Version> must come before the values", "LVData")
             items.append(Node("Version", val=_leaf(child, "LVData/Version")))
         else:
+            seen_value = True
             items.append(_node(child, VALUE_TAGS, "LVData", 1))
     return Document(tuple(items), wrapped=True, namespace=namespace)
 
@@ -53,12 +69,12 @@ def _split(tag: str) -> tuple[str, str | None]:
 
 def _no_attributes(element: ET.Element, path: str) -> None:
     if element.attrib:
-        raise LVXMLError(f"unexpected attributes {sorted(element.attrib)}", path)
+        raise LVXMLError(f"unexpected attributes {quote(sorted(element.attrib))}", path)
 
 
 def _no_text(text: str | None, path: str) -> None:
     if text is not None and text.strip():
-        raise LVXMLError(f"unexpected text {text.strip()[:40]!r}", path)
+        raise LVXMLError(f"unexpected text {quote(text.strip())}", path)
 
 
 def _leaf(element: ET.Element, path: str) -> str:
@@ -85,7 +101,7 @@ class _Children:
 
     def take(self, tag: str) -> str:
         if self.peek() != tag:
-            found = f"<{self.peek()}>" if self.peek() else "the end of the element"
+            found = f"<{segment(self.peek() or '')}>" if self.peek() else "the end of the element"
             raise LVXMLError(f"expected <{tag}>, found {found}", self.path)
         self.pos += 1
         return _leaf(self.kids[self.pos - 1], f"{self.path}/{tag}")
@@ -103,21 +119,21 @@ class _Children:
 
     def end(self) -> None:
         if self.pos < len(self.kids):
-            raise LVXMLError(f"unexpected <{self.peek()}>", self.path)
+            raise LVXMLError(f"unexpected <{segment(self.peek() or '')}>", self.path)
 
 
 def _node(element: ET.Element, allowed: frozenset[str], parent: str, depth: int) -> Node:
     tag = _split(element.tag)[0]
-    here = f"{parent}/{tag}" if parent else tag
+    here = join(parent, segment(tag))
     if depth > MAX_DEPTH:
         raise LVXMLError(f"nesting deeper than {MAX_DEPTH} levels is not supported", here)
     if tag not in allowed:
         where = f"inside <{parent.rsplit('/', 1)[-1]}>" if parent else "as a root element"
-        raise LVXMLError(f"<{tag}> is not allowed {where} by LVXMLSchema.xsd", here)
+        raise LVXMLError(f"<{segment(tag)}> is not allowed {where} by LVXMLSchema.xsd", here)
     _no_attributes(element, here)
     kids = _Children(element, here, depth)
     name = kids.take("Name")
-    kids.path = f"{here}[{name}]" if name else here
+    kids.path = join(parent, segment(tag, name))
     node = _body(tag, name, kids)
     kids.end()
     return node
@@ -130,9 +146,20 @@ def _body(tag: str, name: str, kids: _Children) -> Node:
         choices = tuple(kids.take_all("Choice"))
         return Node(tag, name, val=kids.take("Val"), choices=choices)
     if tag == "Refnum":
-        return Node(tag, name, val=kids.take("Val"), extra=_refnum_extra(kids))
+        # LabVIEW 2026 writes and reads RefKind and RefType only before <Val>; the XSD puts them
+        # after it.
+        early = _kinds(kids)
+        val = kids.take("Val")
+        if kids.peek() in {"RefKind", "RefType"}:
+            raise LVXMLError(
+                "RefKind and RefType go before <Val>; LabVIEW 2026 refuses them after", kids.path
+            )
+        return Node(tag, name, val=val, extra=early + _refnum_extra(kids))
     if tag == "Array":
-        dims = tuple(_count(text, f"{kids.path}/Dimsize") for text in kids.take_all("Dimsize"))
+        sizes = kids.take_all("Dimsize")
+        if len(sizes) > MAX_DIMS:
+            raise LVXMLError(f"more than {MAX_DIMS} dimensions are not supported", kids.path)
+        dims = tuple(_count(text, f"{kids.path}/Dimsize") for text in sizes)
         return Node(tag, name, dims=dims, items=kids.rest(ARRAY_ITEM_TAGS))
     if tag == "Cluster":
         num_elts = _count(kids.take("NumElts"), f"{kids.path}/NumElts")
@@ -142,12 +169,15 @@ def _body(tag: str, name: str, kids: _Children) -> Node:
     return Node(tag, name, items=kids.rest(VALUE_TAGS))  # LvVariant
 
 
+def _kinds(kids: _Children) -> tuple[tuple[str, str], ...]:
+    if kids.peek() != "RefKind":
+        return ()
+    kind = (("RefKind", kids.take("RefKind")),)
+    return kind + ((("RefType", kids.take("RefType")),) if kids.peek() == "RefType" else ())
+
+
 def _refnum_extra(kids: _Children) -> tuple[tuple[str, str], ...]:
     extra: list[tuple[str, str]] = []
-    if kids.peek() == "RefKind":
-        extra.append(("RefKind", kids.take("RefKind")))
-        if kids.peek() == "RefType":
-            extra.append(("RefType", kids.take("RefType")))
     for group, fields in (("ActiveXType", ("GUID", "Name")), ("DotNetType", ("Name",))):
         if kids.peek() != group:
             continue
@@ -162,7 +192,9 @@ def _refnum_extra(kids: _Children) -> tuple[tuple[str, str], ...]:
 
 
 def _count(text: str, path: str) -> int:
-    stripped = text.strip()
+    stripped = text.strip(" ")
     if not stripped.isdigit() or not stripped.isascii():
-        raise LVXMLError(f"expected a non-negative integer, got {text!r}", path)
+        raise LVXMLError(f"expected a non-negative integer, got {quote(text)}", path)
+    if len(stripped.lstrip("0")) > 19 or int(stripped) > MAX_COUNT:
+        raise LVXMLError(f"{quote(stripped)} is larger than {MAX_COUNT}", path)
     return int(stripped)

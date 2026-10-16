@@ -1,0 +1,19 @@
+{
+  "job": "load-single-enum-past",
+  "finished": true,
+  "User Configuration out": [
+    [
+      "Dev1/ai0",
+      1
+    ],
+    [
+      true
+    ],
+    2
+  ],
+  "error out": [
+    false,
+    0,
+    ""
+  ]
+}

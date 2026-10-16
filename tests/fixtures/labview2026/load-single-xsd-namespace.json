@@ -1,0 +1,19 @@
+{
+  "job": "load-single-xsd-namespace",
+  "finished": true,
+  "User Configuration out": [
+    [
+      "Dev1/ai0",
+      1
+    ],
+    [
+      true
+    ],
+    0
+  ],
+  "error out": [
+    false,
+    0,
+    ""
+  ]
+}

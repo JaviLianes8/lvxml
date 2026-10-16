@@ -4,7 +4,11 @@ from __future__ import annotations
 
 import pytest
 from conftest import XSD
-from lxml import etree
+
+try:
+    from lxml import etree
+except ImportError:  # lxml is a test extra; without it the schema checks skip
+    etree = None
 
 LVDATA_NS = "http://www.ni.com/LVData"
 # The shipped XSD declares this target namespace, while LabVIEW's file writer puts
@@ -12,10 +16,11 @@ LVDATA_NS = "http://www.ni.com/LVData"
 XSD_NS = "http://www.ni.com/labview"
 
 # The schema is NI's and stays on the maintainer's machine; without it these tests skip.
+_READY = etree is not None and XSD.is_file()
 requires_xsd = pytest.mark.skipif(
-    not XSD.is_file(), reason="LVXMLSchema.xsd absent: run scripts/capture_ni.py"
+    not _READY, reason="LVXMLSchema.xsd or lxml absent: run scripts/capture_ni.py"
 )
-_SCHEMA = etree.XMLSchema(etree.parse(str(XSD))) if XSD.is_file() else None
+_SCHEMA = etree.XMLSchema(etree.parse(str(XSD))) if _READY else None
 
 
 def xsd_valid(text: str) -> bool:

@@ -1,0 +1,36 @@
+<?xml version='1.0' standalone='yes' ?>
+<LVData xmlns="http://www.ni.com/LVData">
+<Version>26.3.1f1</Version>
+<DBL>
+<Name></Name>
+<Val>1e+300</Val>
+</DBL>
+<DBL>
+<Name>Min</Name>
+<Val>1e-07</Val>
+</DBL>
+<DBL>
+<Name>mean</Name>
+<Val>0.1</Val>
+</DBL>
+<Cluster>
+<Name>Random Graph Data</Name>
+<NumElts>3</NumElts>
+<DBL>
+<Name>Initial X</Name>
+<Val>0</Val>
+</DBL>
+<DBL>
+<Name>Delta X</Name>
+<Val>0.25</Val>
+</DBL>
+<Array>
+<Name>Values</Name>
+<Dimsize>1</Dimsize>
+<DBL>
+<Name>Numeric</Name>
+<Val>1</Val>
+</DBL>
+</Array>
+</Cluster>
+</LVData>

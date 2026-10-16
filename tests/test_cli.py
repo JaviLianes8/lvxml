@@ -15,15 +15,12 @@ REAL = REAL_FILES[0]
 
 
 def test_version(capsys: pytest.CaptureFixture[str]) -> None:
-    with pytest.raises(SystemExit) as info:
-        main(["--version"])
-    assert info.value.code == 0
+    assert main(["--version"]) == 0
     assert capsys.readouterr().out.strip() == f"lvxml {__version__}"
 
 
 def test_help_lists_commands_and_examples(capsys: pytest.CaptureFixture[str]) -> None:
-    with pytest.raises(SystemExit):
-        main(["--help"])
+    assert main(["--help"]) == 0
     out = capsys.readouterr().out
     for word in ("to-json", "to-xml", "validate", "examples:", "lvxml to-json --values -"):
         assert word in out
@@ -78,24 +75,20 @@ def test_validate_reports_ok_and_problems(
 
 
 @pytest.mark.parametrize(
-    "argv",
+    ("argv", "status"),
     [
-        ["to-json", "missing-file.xml"],
-        ["to-xml", "missing-file.json"],
-        ["validate", "missing-file.xml"],
-        ["to-json", "--encoding", "no-such-codec", "x.xml"],
-        ["frobnicate"],
-        [],
+        (["to-json", "missing-file.xml"], 1),
+        (["to-xml", "missing-file.json"], 1),
+        (["validate", "missing-file.xml"], 1),
+        (["to-json", "--encoding", "no-such-codec", "x.xml"], 2),
+        (["frobnicate"], 2),
+        ([], 2),
     ],
 )
-def test_errors_go_to_stderr_with_status_1(
-    argv: list[str], capsys: pytest.CaptureFixture[str]
+def test_problems_exit_1_and_usage_mistakes_exit_2_on_stderr(
+    argv: list[str], status: int, capsys: pytest.CaptureFixture[str]
 ) -> None:
-    try:
-        status = main(argv)
-    except SystemExit as exc:
-        status = exc.code  # type: ignore[assignment]
-    assert status == 1
+    assert main(argv) == status
     captured = capsys.readouterr()
     assert captured.out == ""
     assert "error" in captured.err or "missing-file" in captured.err

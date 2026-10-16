@@ -1,97 +1,108 @@
-"""Install the package in editable mode and drive the real `lvxml` console script."""
+"""Install the built wheel into a throwaway venv and use it as an outside consumer would."""
 
 from __future__ import annotations
 
 import json
-import shutil
 import subprocess
-import sys
-import sysconfig
-from importlib import metadata
 from pathlib import Path
-from urllib.parse import urlparse
-from urllib.request import url2pathname
 
-import pytest
-from conftest import REAL_FILES
+from conftest import ENV, FIXTURES, REAL_FILES
 
 import lvxml
 
-ROOT = Path(__file__).resolve().parents[1]
 REAL = REAL_FILES[0]
-
-pytestmark = pytest.mark.skipif(
-    sys.prefix == sys.base_prefix,
-    reason="installs the package, so it only runs inside a virtual environment",
-)
+CAPTURE = FIXTURES / "labview2026" / "save-cont-escapes.xml"
+CODEPAGE = FIXTURES / "labview2026" / "save-cont-codepage.xml"
 
 
-@pytest.fixture(scope="module")
-def script() -> str:
-    command = [sys.executable, "-m", "pip", "install", "--no-deps", "--no-build-isolation"]
-    subprocess.run([*command, "-e", str(ROOT)], check=True, capture_output=True, timeout=300)
-    direct_url = json.loads(metadata.distribution("lvxml").read_text("direct_url.json") or "{}")
-    assert direct_url["dir_info"] == {"editable": True}
-    assert Path(url2pathname(urlparse(direct_url["url"]).path)).resolve() == ROOT
-    found = shutil.which("lvxml", path=sysconfig.get_path("scripts"))
-    assert found is not None, "pip did not install the lvxml console script"
-    return found
+def run(command: list[str], stdin: bytes = b"") -> subprocess.CompletedProcess[bytes]:
+    return subprocess.run(command, input=stdin, capture_output=True, timeout=120, env=ENV)
 
 
-def run(script: str, *args: str, stdin: bytes = b"") -> subprocess.CompletedProcess[bytes]:
-    return subprocess.run([script, *args], input=stdin, capture_output=True, timeout=60)
+def test_version_from_the_script_and_from_python_m(installed: tuple[Path, Path]) -> None:
+    python, script = installed
+    for command in ([str(script)], [str(python), "-m", "lvxml"]):
+        result = run([*command, "--version"])
+        assert result.returncode == 0
+        assert result.stdout.decode().strip() == f"lvxml {lvxml.__version__}"
 
 
-def test_version(script: str) -> None:
-    result = run(script, "--version")
-    assert result.returncode == 0
-    assert result.stdout.decode().strip() == f"lvxml {lvxml.__version__}"
-
-
-def test_validate_real_file(script: str) -> None:
-    result = run(script, "validate", str(REAL))
+def test_validate_labview_files(installed: tuple[Path, Path]) -> None:
+    _, script = installed
+    result = run([str(script), "validate", str(REAL), str(CAPTURE)])
     assert result.returncode == 0, result.stderr
-    assert result.stdout.decode().strip() == f"{REAL}: OK"
+    assert result.stdout.decode().splitlines() == [f"{REAL}: OK", f"{CAPTURE}: OK"]
 
 
-def test_real_file_through_json_and_back_is_byte_exact(script: str, tmp_path: Path) -> None:
-    tree, back = tmp_path / "tree.json", tmp_path / "back.xml"
-    assert run(script, "to-json", str(REAL), "-o", str(tree)).returncode == 0
-    assert run(script, "to-xml", str(tree), "-o", str(back)).returncode == 0
-    assert back.read_bytes() == REAL.read_bytes()
+def test_labview_files_through_json_and_back_are_byte_exact(
+    installed: tuple[Path, Path], tmp_path: Path
+) -> None:
+    _, script = installed
+    for source, encoding in ((REAL, "utf-8"), (CAPTURE, "utf-8"), (CODEPAGE, "cp1252")):
+        tree, back = tmp_path / "tree.json", tmp_path / "back.xml"
+        assert (
+            run(
+                [str(script), "to-json", "--encoding", encoding, str(source), "-o", str(tree)]
+            ).returncode
+            == 0
+        )
+        assert (
+            run(
+                [str(script), "to-xml", "--encoding", encoding, str(tree), "-o", str(back)]
+            ).returncode
+            == 0
+        )
+        assert back.read_bytes() == source.read_bytes()
 
 
-def test_stdout_pipeline_is_byte_exact(script: str) -> None:
-    tree = run(script, "to-json", "-", stdin=REAL.read_bytes())
+def test_stdout_pipeline_is_byte_exact(installed: tuple[Path, Path]) -> None:
+    _, script = installed
+    tree = run([str(script), "to-json", "-"], stdin=REAL.read_bytes())
     assert tree.returncode == 0
-    back = run(script, "to-xml", "-", stdin=tree.stdout)
+    back = run([str(script), "to-xml", "-"], stdin=tree.stdout)
     assert back.returncode == 0
     assert back.stdout == REAL.read_bytes()
 
 
-def test_values_of_real_file(script: str) -> None:
-    result = run(script, "to-json", "--values", str(REAL))
+def test_values_of_the_real_file(installed: tuple[Path, Path]) -> None:
+    _, script = installed
+    result = run([str(script), "to-json", "--values", str(REAL)])
     assert result.returncode == 0
-    data = json.loads(result.stdout)
-    graph = data[3]
+    graph = json.loads(result.stdout)[3]
     assert graph["name"] == "Random Graph Data"
     assert graph["value"]["Delta X"] == 0.25
     assert len(graph["value"]["Values"]) == 10
 
 
-def test_help_example_runs(script: str) -> None:
-    result = run(script, "to-json", "--values", "-", stdin=b"<I32><Name>n</Name><Val>7</Val></I32>")
-    assert result.returncode == 0
-    assert json.loads(result.stdout) == [{"name": "n", "type": "I32", "value": 7}]
-
-
-def test_errors_exit_1_on_stderr(script: str, tmp_path: Path) -> None:
+def test_problems_exit_1_and_usage_mistakes_exit_2(
+    installed: tuple[Path, Path], tmp_path: Path
+) -> None:
+    _, script = installed
     bad = tmp_path / "bad.xml"
     bad.write_bytes(REAL.read_bytes().replace(b"<NumElts>3</NumElts>", b"<NumElts>4</NumElts>"))
-    result = run(script, "validate", str(bad))
-    assert result.returncode == 1
-    assert result.stdout == b""
+    result = run([str(script), "validate", str(bad)])
+    assert (result.returncode, result.stdout) == (1, b"")
     assert b"NumElts 4 does not match 3" in result.stderr
-    broken = run(script, "to-json", "-", stdin=b"<DBL><Name>x</Name>")
-    assert broken.returncode == 1
-    assert b"invalid XML" in broken.stderr
+    broken = run([str(script), "to-json", "-"], stdin=b"<DBL><Name>x</Name>")
+    assert broken.returncode == 1 and b"invalid XML" in broken.stderr
+    assert run([str(script), "frobnicate"]).returncode == 2
+    hint = run([str(script), "to-json", str(CODEPAGE)])
+    assert hint.returncode == 1 and b"--encoding" in hint.stderr
+
+
+def test_a_consumer_script_uses_the_public_api(
+    installed: tuple[Path, Path], tmp_path: Path
+) -> None:
+    python, _ = installed
+    consumer = tmp_path / "consumer.py"
+    consumer.write_text(
+        "import lvxml\n"
+        "schema = lvxml.Cluster({'x': 'DBL', 'mode': lvxml.LVEnum(('Idle', 'Run'))})\n"
+        "text = lvxml.to_lv_xml({'x': 1.5, 'mode': 'Run'}, schema, name='pt')\n"
+        "assert lvxml.from_lv_xml(text) == {'x': 1.5, 'mode': 'Run'}\n"
+        "assert lvxml.validate(text) == []\n"
+        "print(sorted(lvxml.__all__) == sorted(dir(lvxml)) or 'ok')\n",
+        encoding="utf-8",
+    )
+    result = run([str(python), str(consumer)])
+    assert result.returncode == 0, result.stderr

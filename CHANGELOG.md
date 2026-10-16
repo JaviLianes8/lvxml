@@ -6,7 +6,62 @@ All notable changes to this project are documented here. The format follows
 
 ## [Unreleased]
 
-## [0.2.1]
+## [1.0.0] - 2026-10-16
+
+The public API is now stable: the seventeen names in `lvxml.__all__`, their parameters and
+defaults, the error types and the command line. Every rule below was checked against what
+LabVIEW 2026 writes and reads (see the guide, "What each rule rests on").
+
+### Changed
+
+- Text is read as LabVIEW reads it: only `&lt;`, `&gt;` and `&amp;` are decoded, so
+  `&quot;`, `&apos;`, numeric references and a lone `&` are kept as written.
+- Control characters are read and written raw, as LabVIEW writes them.
+- `Boolean` text is unsigned digits, `0` false and any other number true; `true` and
+  `false` raise.
+- `Infinity` in any spelling raises, as LabVIEW refuses it.
+- A refnum's `RefKind` and `RefType` are read and written before `<Val>`, where LabVIEW 2026
+  puts them; after `<Val>`, the shipped XSD's order, which LabVIEW refuses, they raise. A
+  refnum value must be `0x` and hex digits.
+- Spaces around numbers are allowed and other white space raises; an integer or enum index
+  with a plus sign raises.
+- Number text longer than 1000 characters, a `Dimsize` or `NumElts` above 2**63 - 1, an
+  array with more than 100 dimensions and text with a lone surrogate raise `LVXMLError`, so
+  hostile input stays cheap; every check runs in linear time.
+- A `<Version>` after a value raises; `validate` reports an `<LVData>` document without one.
+- Bytes that are not UTF-8 raise with a hint that LabVIEW writes the system code page;
+  `bytearray` and `memoryview` are read; an encoding the declaration names that Python
+  lacks raises `LVXMLError` with a short message.
+- `Array`, `Cluster` and `LVEnum` check their contents when built (`ValueError` for an
+  unknown tag, `TypeError` for a wrong type); a non-integer `ndim` raises `TypeError`;
+  `Cluster` copies its fields into a new dict.
+- `Node` and `Document` check their field types when built and store lists as tuples.
+- `dump` takes only CRLF, LF or CR as `newline` and spaces and tabs as `indent`; `dump`
+  raises `TypeError` for anything but a `Document` or `Node`, `to_value` for anything but a
+  `Node`.
+- Error messages quote at most 40 characters of a value and stay bounded, and some wording
+  changed (`unknown scalar tag`, `cannot decode byte N as utf-8`); errors pickle with their
+  message and path; every public class reports the module `lvxml`.
+- The command line exits with status 2 for usage mistakes, reads `to-xml` JSON as UTF-8,
+  bounds its problem lines and escapes control characters in them, refuses an `--encoding`
+  that is not a text encoding as a usage mistake, ends quietly on a closed pipe; `main` returns 0
+  for `--help` and `--version`.
+
+### Fixed
+
+- `tests/fixtures/ni/MANIFEST.json` is valid JSON again, so `scripts/capture_ni.py` restores
+  NI's schema for the schema tests.
+
+### Added
+
+- `lvxml.Schema` and `lvxml.Value`, the schema and value types for annotations.
+- `GUIDE.md`, with an upgrade list from 0.2.
+- Ground truth from LabVIEW 2026: files it wrote and values it read back, with the scripts
+  that capture them.
+- Tests: executable documentation, the built wheel driven from a throwaway venv, seeded
+  fuzzing, and contracts proven by deliberate mutations.
+
+## [0.2.1] - 2026-10-13
 
 ### Changed
 

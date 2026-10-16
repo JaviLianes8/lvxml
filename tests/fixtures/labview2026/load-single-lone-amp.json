@@ -1,0 +1,19 @@
+{
+  "job": "load-single-lone-amp",
+  "finished": true,
+  "User Configuration out": [
+    [
+      "a & b &c; &#;",
+      1
+    ],
+    [
+      true
+    ],
+    0
+  ],
+  "error out": [
+    false,
+    0,
+    ""
+  ]
+}

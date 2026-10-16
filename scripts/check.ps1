@@ -2,6 +2,8 @@
 # $ErrorActionPreference does NOT stop on a native command's non-zero exit, so each tool's
 # exit code is checked explicitly: a red gate must fail, never pass silently.
 $ErrorActionPreference = "Stop"
+# Work from the repository root whatever the caller's current folder is.
+Set-Location (Split-Path -Parent $PSScriptRoot)
 
 function Invoke-Step($label, [scriptblock]$cmd) {
     Write-Host "== $label =="
@@ -11,6 +13,6 @@ function Invoke-Step($label, [scriptblock]$cmd) {
 
 Invoke-Step "ruff format" { ruff format --check . }
 Invoke-Step "ruff lint"   { ruff check . }
-Invoke-Step "mypy"        { mypy --strict src }
+Invoke-Step "mypy"        { mypy --strict src tests }
 Invoke-Step "pytest"      { pytest }
 Write-Host "gate green"

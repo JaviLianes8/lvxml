@@ -1,0 +1,19 @@
+{
+  "job": "load-single-entities",
+  "finished": true,
+  "User Configuration out": [
+    [
+      "&quot;&apos;&#13;&#x41;&#65;",
+      1
+    ],
+    [
+      true
+    ],
+    0
+  ],
+  "error out": [
+    false,
+    0,
+    ""
+  ]
+}

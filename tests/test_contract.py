@@ -17,6 +17,8 @@ PUBLIC_API: list[str] = [
     "dump",
     "from_lv_xml",
     "from_lv_xml_all",
+    "Schema",
+    "Value",
     "parse",
     "to_lv_xml",
     "to_node",

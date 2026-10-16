@@ -1,0 +1,19 @@
+{
+  "job": "load-single-lvxml-to-lv-xml",
+  "finished": true,
+  "User Configuration out": [
+    [
+      "",
+      0
+    ],
+    [
+      true
+    ],
+    0
+  ],
+  "error out": [
+    false,
+    0,
+    ""
+  ]
+}

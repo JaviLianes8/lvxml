@@ -2,33 +2,53 @@
 
 from __future__ import annotations
 
+from collections.abc import Callable
+from typing import TypeVar
+
 from ._checks import child_path, problems
 from ._errors import LVXMLError
 from ._node import Node
 from ._numbers import parse_bool, parse_complex, parse_float, parse_int
 from ._parse import parse
 from ._schema import COMPLEX_TAGS, ENUM_RANGES, FLOAT_TAGS, INT_RANGES, Value
+from ._text import quote
 from ._treejson import check_shape
 
+T = TypeVar("T")
 
-def from_lv_xml(text: str | bytes) -> Value:
+
+def from_lv_xml(text: str | bytes | bytearray | memoryview) -> Value:
     """Parse LabVIEW flattened XML into the Python value of its first value element.
 
     Inside an ``<LVData>`` file wrapper the ``<Version>`` header is skipped; use
-    `from_lv_xml_all` when the file holds several values.
+    `from_lv_xml_all` when the file holds several values. Bytes are decoded by their XML
+    declaration, or as UTF-8.
+
+    >>> from_lv_xml("<I32><Name>count</Name><Val>-7</Val></I32>")
+    -7
+    >>> from_lv_xml("<Boolean><Name>on</Name><Val>1</Val></Boolean>")
+    True
     """
     document = parse(text)
     if not document.values:
         raise LVXMLError("<LVData> holds no value")
     root = "LVData" if document.wrapped else ""
-    return _value(document.values[0], root)
+    return _guarded(lambda: _value(document.values[0], root))
 
 
-def from_lv_xml_all(text: str | bytes) -> list[Value]:
-    """Parse LabVIEW flattened XML into the Python values of every value element, in order."""
+def from_lv_xml_all(text: str | bytes | bytearray | memoryview) -> list[Value]:
+    """Parse LabVIEW flattened XML into the Python values of every value element, in order.
+
+    >>> from_lv_xml_all(
+    ...     "<LVData><Version>26.3.1f1</Version>"
+    ...     "<DBL><Name>a</Name><Val>0.5</Val></DBL>"
+    ...     "<String><Name>b</Name><Val>x &amp; y</Val></String></LVData>"
+    ... )
+    [0.5, 'x & y']
+    """
     document = parse(text)
     root = "LVData" if document.wrapped else ""
-    return [_value(node, root) for node in document.values]
+    return _guarded(lambda: [_value(node, root) for node in document.values])
 
 
 def to_value(node: Node) -> Value:
@@ -40,10 +60,20 @@ def to_value(node: Node) -> Value:
     ``Array`` becomes a list, nested once per dimension, and a ``Cluster`` a dict keyed by
     field name. ``LvVariant``, ``Timestamp``, ``WDT``, ``DynamicData``, ``DigitalData``
     and the waveform elements become the list of their items' values.
+
+    >>> from lvxml import Node
+    >>> to_value(Node("EW", "mode", val="1", choices=("Idle", "Run")))
+    'Run'
     """
+    if not isinstance(node, Node):
+        raise TypeError(f"to_value takes a Node, not {type(node).__name__}")
     check_shape(node, "")
+    return _guarded(lambda: _value(node, ""))
+
+
+def _guarded(convert: Callable[[], T]) -> T:
     try:
-        return _value(node, "")
+        return convert()
     except RecursionError:
         raise LVXMLError("the tree is nested too deeply to convert") from None
 
@@ -78,7 +108,7 @@ def _cluster(node: Node, path: str) -> dict[str, Value]:
     for item in node.items:
         if item.name in fields:
             raise LVXMLError(
-                f"duplicate field name {item.name!r} cannot map to a dict; "
+                f"duplicate field name {quote(item.name)} cannot map to a dict; "
                 "use lvxml.parse for positional access",
                 path,
             )

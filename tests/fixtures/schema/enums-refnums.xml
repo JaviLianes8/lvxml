@@ -1,5 +1,6 @@
 <?xml version='1.0' standalone='yes' ?>
 <LVData xmlns="http://www.ni.com/LVData">
+  <Version>26.3.1f1</Version>
   <EB><Name>mode</Name><Choice>Off</Choice><Choice>On</Choice><Val>1</Val></EB>
   <EW>
     <Name>state</Name>
@@ -12,9 +13,9 @@
   <Refnum><Name>plain</Name><Val>0x00000000</Val></Refnum>
   <Refnum>
     <Name>queue</Name>
-    <Val>0x12345678</Val>
     <RefKind>Queue</RefKind>
     <RefType>Generic</RefType>
+    <Val>0x12345678</Val>
   </Refnum>
   <Refnum>
     <Name>activex</Name>
@@ -23,8 +24,8 @@
   </Refnum>
   <Refnum>
     <Name>dotnet</Name>
-    <Val>0x00000002</Val>
     <RefKind>.NET Refnum</RefKind>
+    <Val>0x00000002</Val>
     <DotNetType><Name>System.Object</Name></DotNetType>
   </Refnum>
 </LVData>
