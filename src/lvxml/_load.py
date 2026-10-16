@@ -63,7 +63,7 @@ def load(text: str) -> ET.Element:
         raise LVXMLError("CDATA sections are not supported; LabVIEW escapes text instead")
     # The text is already decoded, so an encoding named in the declaration must not apply.
     body = _DECLARATION.sub("", text, count=1)
-    body = _hide(_FOREIGN_AMPERSAND.sub("&amp;", body))
+    body = _hide(_literal_ampersands(body))
     try:
         root = ET.fromstring(_keep_carriage_returns(body))
     except ET.ParseError as exc:
@@ -74,6 +74,16 @@ def load(text: str) -> ET.Element:
             element.text = _show(element.text)
             element.tail = _show(element.tail)
     return root
+
+
+def _literal_ampersands(text: str) -> str:
+    """Escape every ampersand LabVIEW keeps literal, in text only; attribute values such as
+    the namespace keep the entities XML gives them."""
+    if "&" not in text:
+        return text
+    parts = _MARKUP.split(text)
+    parts[::2] = [_FOREIGN_AMPERSAND.sub("&amp;", part) for part in parts[::2]]
+    return "".join(parts)
 
 
 def _hide(text: str) -> str:
