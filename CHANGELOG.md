@@ -6,7 +6,43 @@ All notable changes to this project are documented here. The format follows
 
 ## [Unreleased]
 
-## [0.2.1]
+## [1.0.0] - 2026-10-16
+
+The public API is now stable: the fifteen names in `lvxml.__all__`, their parameters and
+defaults, the error types and the command line. Every rule below was checked against what
+LabVIEW 2026 writes and reads (see the guide, "What each rule rests on").
+
+### Changed
+
+- Text is read as LabVIEW reads it: only `&lt;`, `&gt;` and `&amp;` are decoded, so
+  `&quot;`, `&apos;`, numeric references and a lone `&` are kept as written.
+- Control characters are read and written raw, as LabVIEW writes them.
+- `Boolean` text is unsigned digits, `0` false and any other number true; `true` and
+  `false` raise.
+- `Infinity` in any spelling raises, as LabVIEW refuses it.
+- A refnum's `RefKind` and `RefType` are read before or after `<Val>` and written before it,
+  where LabVIEW 2026 puts them.
+- Bytes that are not UTF-8 raise with a hint that LabVIEW writes the system code page;
+  `bytearray` and `memoryview` are read.
+- `Array`, `Cluster` and `LVEnum` check their contents when built (`ValueError` for an
+  unknown tag, `TypeError` for a wrong type); a non-integer `ndim` raises `TypeError`.
+- `Node` and `Document` check their field types when built and store lists as tuples.
+- `dump` takes only CRLF, LF or CR as `newline` and spaces and tabs as `indent`.
+- Error messages quote at most 40 characters of a value and stay bounded; errors pickle
+  with their message and path.
+- The command line exits with status 2 for usage mistakes, reads `to-xml` JSON as UTF-8,
+  bounds and escapes its problem lines and ends quietly on a closed pipe; `main` returns 0
+  for `--help` and `--version`.
+
+### Added
+
+- `GUIDE.md`, with an upgrade list from 0.2.
+- Ground truth from LabVIEW 2026: files it wrote and values it read back, with the scripts
+  that capture them.
+- Tests: executable documentation, the built wheel driven from a throwaway venv, seeded
+  fuzzing, and contracts proven by deliberate mutations.
+
+## [0.2.1] - 2026-10-13
 
 ### Changed
 

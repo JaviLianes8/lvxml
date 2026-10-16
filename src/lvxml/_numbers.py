@@ -65,7 +65,7 @@ def parse_bool(text: str) -> bool:
     """
     stripped = text.strip()
     if not stripped.isascii() or not stripped.isdigit():
-        raise ValueError(f"invalid boolean value {quote(text)}, expected 0 or 1")
+        raise ValueError(f"invalid boolean value {quote(text)}, expected unsigned digits")
     return int(stripped, 10) != 0
 
 

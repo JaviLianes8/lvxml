@@ -152,10 +152,6 @@ def check_schema(schema: object) -> None:
         raise ValueError(f"unknown scalar tag {quote(schema)}")
 
 
-for _public in (Array, Cluster, LVEnum):
-    _public.__module__ = "lvxml"
-
-
 # A scalar tag such as "DBL", or a compound container.
 Schema = str | Array | Cluster | LVEnum
 
