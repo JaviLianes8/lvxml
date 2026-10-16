@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 import argparse
-import codecs
 import contextlib
 import json
 import os
@@ -93,6 +92,8 @@ def _to_xml(args: argparse.Namespace) -> int:
         data = json.loads(read(args.file, "utf-8"))
     except json.JSONDecodeError as exc:
         raise LVXMLError(f"invalid JSON: {exc.msg} at line {exc.lineno}") from None
+    except ValueError as exc:  # such as an integer longer than Python converts
+        raise LVXMLError(f"invalid JSON: {str(exc)[:80]}") from None
     newline = "\r\n" if args.newline == "crlf" else "\n"
     write(dump(Document.from_dict(data), newline=newline), args.output, args.encoding)
     return 0
@@ -125,10 +126,10 @@ def main(argv: Sequence[str] | None = None) -> int:
     handlers = {"to-json": _to_json, "to-xml": _to_xml, "validate": _validate}
     try:
         args = parser.parse_args(argv)
-        try:
-            codecs.lookup(args.encoding)
-        except LookupError:
-            parser.error(f"unknown encoding {args.encoding[:40]!r}")
+        try:  # a text codec turns text into bytes and back; base64 or rot13 do not
+            "x".encode(args.encoding).decode(args.encoding)
+        except (LookupError, UnicodeError, TypeError, ValueError):
+            parser.error(f"unknown text encoding {args.encoding[:40]!r}")
         return handlers[args.command](args)
     except SystemExit as done:  # --help and --version
         return done.code if isinstance(done.code, int) else 0

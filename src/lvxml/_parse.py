@@ -18,6 +18,8 @@ from ._text import join, quote, segment
 
 # Deeper nesting than this is refused rather than exhausting the interpreter's stack.
 MAX_DEPTH = 100
+MAX_DIMS = 100  # the most dimensions an array may have
+MAX_COUNT = 2**63 - 1  # the largest Dimsize or NumElts
 
 
 def parse(text: str | bytes | bytearray | memoryview) -> Document:
@@ -154,7 +156,10 @@ def _body(tag: str, name: str, kids: _Children) -> Node:
             )
         return Node(tag, name, val=val, extra=early + _refnum_extra(kids))
     if tag == "Array":
-        dims = tuple(_count(text, f"{kids.path}/Dimsize") for text in kids.take_all("Dimsize"))
+        sizes = kids.take_all("Dimsize")
+        if len(sizes) > MAX_DIMS:
+            raise LVXMLError(f"more than {MAX_DIMS} dimensions are not supported", kids.path)
+        dims = tuple(_count(text, f"{kids.path}/Dimsize") for text in sizes)
         return Node(tag, name, dims=dims, items=kids.rest(ARRAY_ITEM_TAGS))
     if tag == "Cluster":
         num_elts = _count(kids.take("NumElts"), f"{kids.path}/NumElts")
@@ -190,4 +195,6 @@ def _count(text: str, path: str) -> int:
     stripped = text.strip(" ")
     if not stripped.isdigit() or not stripped.isascii():
         raise LVXMLError(f"expected a non-negative integer, got {quote(text)}", path)
+    if len(stripped.lstrip("0")) > 19 or int(stripped) > MAX_COUNT:
+        raise LVXMLError(f"{quote(stripped)} is larger than {MAX_COUNT}", path)
     return int(stripped)

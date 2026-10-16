@@ -2,11 +2,10 @@
 
 from __future__ import annotations
 
-import math
 import re
 from collections.abc import Iterator
 
-from ._errors import LVXMLError
+from ._errors import LVXMLError, cut
 from ._node import Document, Node
 from ._numbers import parse_bool, parse_complex, parse_float, parse_int
 from ._parse import parse
@@ -28,7 +27,7 @@ def problems(node: Node) -> list[str]:
     except ValueError as exc:
         found.append(str(exc))
     if node.tag == "Array":
-        total = math.prod(node.dims)
+        total = _total(node.dims)
         count = len(node.items)
         if total == 0 and count > 1:
             found.append(f"array Dimsize {_dims(node)} is empty but holds {count} elements")
@@ -42,6 +41,16 @@ def problems(node: Node) -> list[str]:
     if node.tag == "Cluster" and node.num_elts != len(node.items):
         found.append(f"cluster NumElts {node.num_elts} does not match {len(node.items)} elements")
     return found
+
+
+def _total(dims: tuple[int, ...]) -> int:
+    """The element count of `dims`, stopping once it passes any count an array can hold."""
+    total = 1
+    for dim in dims:
+        total *= dim
+        if total > 2**63:
+            return 2**63 if 0 not in dims else 0
+    return total
 
 
 def _empty_rows(dims: tuple[int, ...]) -> int:
@@ -120,5 +129,5 @@ def document_problems(document: Document) -> list[str]:
     found: list[str] = []
     for top in document.values:
         for path, node in walk(top, root):
-            found.extend(f"{path}: {problem}" for problem in problems(node))
+            found.extend(cut(f"{path}: {problem}") for problem in problems(node))
     return found

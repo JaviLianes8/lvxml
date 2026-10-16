@@ -25,6 +25,9 @@ LabVIEW 2026 writes and reads (see the guide, "What each rule rests on").
   refnum value must be `0x` and hex digits.
 - Spaces around numbers are allowed and other white space raises; an integer or enum index
   with a plus sign raises.
+- Number text longer than 1000 characters, a `Dimsize` or `NumElts` above 2**63 - 1, an
+  array with more than 100 dimensions and text with a lone surrogate raise `LVXMLError`, so
+  hostile input stays cheap; every check runs in linear time.
 - A `<Version>` after a value raises; `validate` reports an `<LVData>` document without one.
 - Bytes that are not UTF-8 raise with a hint that LabVIEW writes the system code page;
   `bytearray` and `memoryview` are read; an encoding the declaration names that Python
@@ -40,7 +43,8 @@ LabVIEW 2026 writes and reads (see the guide, "What each rule rests on").
   changed (`unknown scalar tag`, `cannot decode byte N as utf-8`); errors pickle with their
   message and path; every public class reports the module `lvxml`.
 - The command line exits with status 2 for usage mistakes, reads `to-xml` JSON as UTF-8,
-  bounds and escapes its problem lines and ends quietly on a closed pipe; `main` returns 0
+  bounds its problem lines and escapes control characters in them, refuses an `--encoding`
+  that is not a text encoding as a usage mistake, ends quietly on a closed pipe; `main` returns 0
   for `--help` and `--version`.
 
 ### Added

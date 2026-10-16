@@ -30,7 +30,7 @@ def _deep_clusters(depth: int) -> str:
 
 
 def test_huge_empty_shape_is_refused_quickly() -> None:
-    text = "<Array><Name></Name><Dimsize>99999999999999999999</Dimsize><Dimsize>0</Dimsize></Array>"
+    text = "<Array><Name></Name><Dimsize>9223372036854775807</Dimsize><Dimsize>0</Dimsize></Array>"
     started = time.perf_counter()
     with pytest.raises(LVXMLError, match="needs over 100000 lists"):
         from_lv_xml(text)

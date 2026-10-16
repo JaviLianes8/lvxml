@@ -23,16 +23,17 @@ class LVXMLError(ValueError):
     """
 
     def __init__(self, message: str, path: str = "") -> None:
-        shown = f"{_cut(path)}: {_cut(message)}" if path else _cut(message)
+        shown = f"{cut(path)}: {cut(message)}" if path else cut(message)
         super().__init__(shown)
-        self.message = _cut(message)
+        self.message = cut(message)
         self.path = path
 
     def __reduce__(self) -> tuple[type[LVXMLError], tuple[str, str]]:
         return type(self), (self.message, self.path)
 
 
-def _cut(text: str) -> str:
+def cut(text: str) -> str:
+    """Return `text`, or its start and end around ``...`` when it is too long to show."""
     if len(text) <= _SHOWN:
         return text
     half = (_SHOWN - 5) // 2

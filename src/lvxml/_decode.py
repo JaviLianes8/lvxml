@@ -2,6 +2,9 @@
 
 from __future__ import annotations
 
+from collections.abc import Callable
+from typing import TypeVar
+
 from ._checks import child_path, problems
 from ._errors import LVXMLError
 from ._node import Node
@@ -10,6 +13,8 @@ from ._parse import parse
 from ._schema import COMPLEX_TAGS, ENUM_RANGES, FLOAT_TAGS, INT_RANGES, Value
 from ._text import quote
 from ._treejson import check_shape
+
+T = TypeVar("T")
 
 
 def from_lv_xml(text: str | bytes | bytearray | memoryview) -> Value:
@@ -28,7 +33,7 @@ def from_lv_xml(text: str | bytes | bytearray | memoryview) -> Value:
     if not document.values:
         raise LVXMLError("<LVData> holds no value")
     root = "LVData" if document.wrapped else ""
-    return _value(document.values[0], root)
+    return _guarded(lambda: _value(document.values[0], root))
 
 
 def from_lv_xml_all(text: str | bytes | bytearray | memoryview) -> list[Value]:
@@ -43,7 +48,7 @@ def from_lv_xml_all(text: str | bytes | bytearray | memoryview) -> list[Value]:
     """
     document = parse(text)
     root = "LVData" if document.wrapped else ""
-    return [_value(node, root) for node in document.values]
+    return _guarded(lambda: [_value(node, root) for node in document.values])
 
 
 def to_value(node: Node) -> Value:
@@ -63,8 +68,12 @@ def to_value(node: Node) -> Value:
     if not isinstance(node, Node):
         raise TypeError(f"to_value takes a Node, not {type(node).__name__}")
     check_shape(node, "")
+    return _guarded(lambda: _value(node, ""))
+
+
+def _guarded(convert: Callable[[], T]) -> T:
     try:
-        return _value(node, "")
+        return convert()
     except RecursionError:
         raise LVXMLError("the tree is nested too deeply to convert") from None
 

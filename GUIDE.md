@@ -197,6 +197,12 @@ LabVIEW 2026 reads an enum index past the last choice as the last choice; `lvxml
 | `ValueError` | a schema object that cannot exist (`LVEnum(())`, `Array("FXP")`), a `newline` or `indent` `dump` does not write |
 | `TypeError` | input that is not `str` or bytes-like, a `dump` argument that is not a `Document` or `Node`, a `to_value` argument that is not a `Node`, a schema that is not a tag or schema object, a `Node` or `Document` field of the wrong type |
 
+Limits keep hostile input cheap: nesting deeper than 100 levels, an array with more than 100
+dimensions, a `Dimsize` or `NumElts` above 2**63 - 1, number text longer than 1000 characters
+and text holding a lone surrogate raise `LVXMLError`; an empty array whose shape would expand
+to more than 100000 nested lists is a value problem. Every check runs in time linear in the
+input.
+
 `LVXMLError.path` locates the element, such as `LVData/Cluster[pt]/DBL[x]`, and
 `LVXMLError.message` says what is wrong. Values quoted in messages are cut to 40 characters
 and `str()` of an error stays a few hundred characters long, so hostile input never makes a
@@ -208,7 +214,10 @@ huge message. Errors pickle with their message and path.
 with `--values` plain values; `to-xml` turns tree JSON back into LabVIEW XML; `validate`
 checks files. `--encoding` names the encoding of the XML files, read or written (default
 UTF-8; LabVIEW's files use the system code page); JSON is always UTF-8. `-` reads standard
-input. Problems go to standard error with exit status 1, usage mistakes exit with status 2.
+input. Problems go to standard error with exit status 1, usage mistakes (including an
+`--encoding` that is not a text encoding, such as `base64`) exit with status 2. Problem lines
+are cut to 300 characters, and control characters and line breaks from the input are shown
+escaped, so a hostile file cannot fake output or drive the terminal.
 
 ```console
 $ lvxml validate tests/fixtures/real/example-flattened-xml-file.xml
@@ -291,11 +300,15 @@ Every behaviour change in 1.0.0, also listed in the changelog:
     (`unknown scalar tag`, `cannot decode byte N as utf-8`, `unknown encoding` for a declared
     encoding Python lacks). Errors pickle with their message and path, and every public class
     reports the module `lvxml`.
-13. `lvxml.Schema` and `lvxml.Value` name the schema and value types for annotations.
-14. The command line exits with status 2 for usage mistakes (was 1); `to-xml` reads its JSON
+13. Number text longer than 1000 characters, a `Dimsize` or `NumElts` above 2**63 - 1, an
+    array with more than 100 dimensions and text holding a lone surrogate raise `LVXMLError`
+    (0.2 tried to convert them, which could take minutes or raise other errors).
+14. `lvxml.Schema` and `lvxml.Value` name the schema and value types for annotations.
+15. The command line exits with status 2 for usage mistakes (was 1); `to-xml` reads its JSON
     as UTF-8 and `--encoding` only names the XML encoding; problem lines are bounded and
     characters the console cannot show are escaped; a closed output pipe ends quietly with
-    status 1, on Windows too; `main(["--help"])` and `main(["--version"])` return 0 instead of raising
+    status 1, on Windows too; an `--encoding` that is not a text encoding is a usage
+    mistake and control characters in problem lines are escaped; `main(["--help"])` and `main(["--version"])` return 0 instead of raising
     `SystemExit`.
 
 ## Test fixtures

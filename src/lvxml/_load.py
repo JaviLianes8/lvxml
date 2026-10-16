@@ -17,6 +17,7 @@ _FOREIGN_AMPERSAND = re.compile(r"&(?!(?:lt|gt|amp);)")
 # the parser as a private-use escape character followed by a private-use code.
 _ESCAPE = "\ue000"
 _HIDDEN = re.compile("[\x00-\x08\x0b\x0c\x0e-\x1f\ue000-\ue020]")
+_SURROGATE = re.compile("[\ud800-\udfff]")
 _SHOWN = re.compile("\ue000([\ue001-\ue041])")
 
 
@@ -40,7 +41,9 @@ def decode(data: str | bytes | bytearray | memoryview) -> str:
         return raw.decode(declared)
     except LookupError:
         raise LVXMLError(f"unknown encoding {quote(declared)} in the XML declaration") from None
-    except UnicodeDecodeError as exc:
+    except UnicodeError as exc:
+        if not isinstance(exc, UnicodeDecodeError):
+            raise LVXMLError(f"cannot decode the input as {quote(declared)}") from None
         hint = (
             "; LabVIEW writes files in the system code page, so decode them with it "
             "(for example cp1252) and pass the text"
@@ -54,6 +57,8 @@ def load(text: str) -> ET.Element:
     """Parse `text` into an element tree, refusing what LabVIEW XML never contains."""
     if "<!DOCTYPE" in text:
         raise LVXMLError("a DOCTYPE is not part of LabVIEW XML")
+    if _SURROGATE.search(text):
+        raise LVXMLError("the text holds a lone surrogate, which no XML document can carry")
     if "<![CDATA[" in text:
         raise LVXMLError("CDATA sections are not supported; LabVIEW escapes text instead")
     # The text is already decoded, so an encoding named in the declaration must not apply.
@@ -65,6 +70,7 @@ def load(text: str) -> ET.Element:
         raise LVXMLError(f"invalid XML: {exc}") from None
     if _ESCAPE in body:
         for element in root.iter():
+            element.tag = _show(element.tag) or ""
             element.text = _show(element.text)
             element.tail = _show(element.tail)
     return root

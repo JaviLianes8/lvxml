@@ -18,6 +18,8 @@ def say(stream: TextIO | None, line: str) -> None:
     """Write one line, cut to a bounded length, whatever the stream can encode."""
     if stream is None:
         return
+    # Control characters and line breaks from the input are shown escaped, never acted on.
+    line = "".join(c if c.isprintable() else ascii(c)[1:-1] for c in line[: _LINE + 1])
     if len(line) > _LINE:
         line = line[: _LINE - 4] + " ..."
     encoding = getattr(stream, "encoding", None) or "utf-8"
@@ -35,17 +37,18 @@ def read(path: str, encoding: str) -> str:
             data = handle.read()
     try:
         return data.decode(encoding)
-    except UnicodeDecodeError as exc:
+    except UnicodeError as exc:
         where = "stdin" if path == "-" else path
-        raise LVXMLError(
-            f"{where} is not valid {encoding} ({exc.reason}); try --encoding"
-        ) from None
+        reason = getattr(exc, "reason", "cannot decode")
+        raise LVXMLError(f"{where} is not valid {encoding} ({reason}); try --encoding") from None
 
 
 def write(text: str, output: str | None, encoding: str) -> None:
     try:
         data = text.encode(encoding)
-    except UnicodeEncodeError as exc:
+    except UnicodeError as exc:
+        if not isinstance(exc, UnicodeEncodeError):
+            raise LVXMLError(f"the text cannot be written as {encoding}") from None
         bad = exc.object[exc.start : min(exc.end, exc.start + 10)]
         raise LVXMLError(f"{bad!r} cannot be written as {encoding}; try --encoding utf-8") from None
     if output is not None:
