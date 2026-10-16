@@ -4,6 +4,8 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 
+from ._fields import check_document, check_node
+
 # The namespace LabVIEW's XML file writer puts on <LVData>.
 LVDATA_NAMESPACE = "http://www.ni.com/LVData"
 
@@ -29,6 +31,9 @@ class Node:
     num_elts: int | None = None
     items: tuple[Node, ...] = ()
     extra: tuple[tuple[str, str], ...] = ()
+
+    def __post_init__(self) -> None:
+        check_node(self)
 
     def to_dict(self) -> dict[str, object]:
         """Return a JSON-ready dict that `Node.from_dict` turns back into this node."""
@@ -58,6 +63,9 @@ class Document:
     wrapped: bool = True
     namespace: str | None = LVDATA_NAMESPACE
 
+    def __post_init__(self) -> None:
+        check_document(self)
+
     @property
     def version(self) -> str | None:
         """The text of the first ``<Version>`` header, if there is one."""
@@ -83,3 +91,6 @@ class Document:
         from ._treejson import document_from_dict
 
         return document_from_dict(data)
+
+
+Node.__module__ = Document.__module__ = "lvxml"
