@@ -62,3 +62,28 @@ def test_the_split_alternates_text_and_markup_and_a_tag_holds_no_less_than() -> 
     parts = split_markup("a < b<!-- <? -->c<?p <!-- ?><d e='>' f=\"<\">g")
     assert parts == ["a < b", "<!-- <? -->", "c", "<?p <!-- ?>", "<d e='>' f=\"<\">g"]
     assert "".join(parts) == "a < b<!-- <? -->c<?p <!-- ?><d e='>' f=\"<\">g"
+
+
+@pytest.mark.parametrize(
+    ("text", "parts"),
+    [
+        ("<d e='<'>", ["<d e='<'>"]),
+        ("x<a+b>y", ["x", "<a+b>", "y"]),
+        ("<<b>", ["<", "<b>", ""]),
+        ("<!-a<b-->", ["<!-a", "<b-->", ""]),
+        ("<!-->a<b-->", ["", "<!-->a<b-->", ""]),
+    ],
+    ids=[
+        "less-than-in-single-quotes",
+        "any-tag-character",
+        "stray-then-tag",
+        "not-a-comment",
+        "comment-opening-with-arrow",
+    ],
+)
+def test_the_split_follows_xml_markup_rules(text: str, parts: list[str]) -> None:
+    assert split_markup(text) == parts
+
+
+def test_a_comment_whose_text_starts_with_greater_than_is_read() -> None:
+    assert from_lv_xml(f"<!-->a<b-->\r\n{VALUE}") == "a\r\nb &c"
