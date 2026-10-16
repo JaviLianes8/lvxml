@@ -122,10 +122,12 @@ True
 `dump(tree, newline="\r\n", indent="", declaration=None)` writes LabVIEW's file layout by
 default: one element per line, CRLF, no indentation, no final line break, and the
 declaration for an `<LVData>` document. `newline` is CRLF, LF or CR and `indent` only spaces
-and tabs. Node fields are type checked when a node is built (`TypeError`); whether they suit
-the tag is checked by `dump` and `to_value` (`LVXMLError`). A refnum's `RefKind` and
-`RefType` are written before `<Val>`, where LabVIEW 2026 writes them; the reader accepts them
-before or after.
+and tabs. Node fields are type checked when a node is built (`TypeError`). `dump` checks
+the shape: which parts a tag takes and which children it may hold (`LVXMLError`); it writes
+values as they are, so a raw `<Val>` such as `300` in an `I8` is written. `to_value` and
+`validate` check the values. A refnum's `RefKind` and `RefType` are written before `<Val>`,
+where LabVIEW 2026 writes them; the reader takes them together, `RefKind` first, either
+before or after `<Val>`.
 
 ## Files and code pages
 
@@ -183,7 +185,7 @@ LabVIEW 2026 reads an enum index past the last choice as the last choice; `lvxml
 | --- | --- |
 | `LVXMLError` (a `ValueError`) | malformed XML, a shape the schema does not allow, a value that does not parse or fit, a tree `dump` or `to_value` cannot write, bytes that do not decode |
 | `ValueError` | a schema object that cannot exist (`LVEnum(())`, `Array("FXP")`), a `newline` or `indent` `dump` does not write |
-| `TypeError` | input that is not `str` or bytes, a schema that is not a tag or schema object, a `Node` or `Document` field of the wrong type |
+| `TypeError` | input that is not `str` or bytes-like, a `dump` or `to_value` argument that is not a tree, a schema that is not a tag or schema object, a `Node` or `Document` field of the wrong type |
 
 `LVXMLError.path` locates the element, such as `LVData/Cluster[pt]/DBL[x]`, and
 `LVXMLError.message` says what is wrong. Values quoted in messages are cut to 40 characters
@@ -204,7 +206,7 @@ tests/fixtures/real/example-flattened-xml-file.xml: OK
 $ lvxml validate tests/fixtures/labview2026/inputs/load-single-true-word.xml
 tests/fixtures/labview2026/inputs/load-single-true-word.xml: LVData/Cluster[User Configuration]/Cluster[Analysis Configuration]/Boolean[Statistics]: invalid boolean value 'true', expected unsigned digits
 $ lvxml to-json tests/fixtures/labview2026/save-cont-codepage.xml
-lvxml: error: the file is not valid utf-8 (invalid continuation byte); try --encoding
+lvxml: error: tests/fixtures/labview2026/save-cont-codepage.xml is not valid utf-8 (invalid continuation byte); try --encoding
 ```
 
 `--values` writes strict JSON: complex numbers become `{"re": ..., "im": ...}` and
@@ -253,8 +255,8 @@ Every behaviour change in 1.0.0, also listed in the changelog:
 3. `Boolean` text is unsigned digits, `0` false and any other number true; `true` and
    `false` raise (0.2 read them and raised for `2`).
 4. `Infinity` in any spelling raises (0.2 read it as infinity).
-5. A refnum's `RefKind` and `RefType` are read before or after `<Val>` and written before it
-   (0.2 refused LabVIEW's own order and wrote them after).
+5. A refnum's `RefKind` and `RefType` are read together, `RefKind` first, before or after
+   `<Val>`, and written before it (0.2 refused LabVIEW's own order and wrote them after).
 6. Bytes that are not UTF-8 raise with a code page hint; `bytearray` and `memoryview` are
    read; an unknown declared encoding raises `LVXMLError` with a short message.
 7. `Array`, `Cluster` and `LVEnum` check their contents when built: an unknown tag raises
@@ -262,15 +264,17 @@ Every behaviour change in 1.0.0, also listed in the changelog:
    `ndim` raises `TypeError` (was `ValueError`); `Cluster` copies its fields into a new dict.
 8. `Node` and `Document` check their field types when built (`TypeError`) and store lists as
    tuples.
-9. `dump` takes only CRLF, LF or CR as `newline` and spaces and tabs as `indent`, and raises
-   `TypeError` for anything but a `Document` or a `Node`.
+9. `dump` takes only CRLF, LF or CR as `newline` and spaces and tabs as `indent`; `dump` and
+   `to_value` raise `TypeError` for anything but a tree (0.2 raised `AttributeError`).
 10. Messages quote at most 40 characters of a value and stay bounded; some wording changed
-    (`unknown scalar tag`, `cannot decode byte N as utf-8`). Errors pickle with their message
-    and path, and `LVXMLError`, `Node` and `Document` report the module `lvxml`.
-11. The command line exits with status 2 for usage mistakes (was 1); `to-xml` reads its JSON
+    (`unknown scalar tag`, `cannot decode byte N as utf-8`, `unknown encoding` for a declared
+    encoding Python lacks). Errors pickle with their message and path, and every public class
+    reports the module `lvxml`.
+11. `lvxml.Schema` and `lvxml.Value` name the schema and value types for annotations.
+12. The command line exits with status 2 for usage mistakes (was 1); `to-xml` reads its JSON
     as UTF-8 and `--encoding` only names the XML encoding; problem lines are bounded and
     characters the console cannot show are escaped; a closed output pipe ends quietly with
-    status 1; `main(["--help"])` and `main(["--version"])` return 0 instead of raising
+    status 1, on Windows too; `main(["--help"])` and `main(["--version"])` return 0 instead of raising
     `SystemExit`.
 
 ## Test fixtures

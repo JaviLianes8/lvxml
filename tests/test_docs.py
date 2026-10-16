@@ -31,8 +31,8 @@ def test_module_doctests_pass(name: str) -> None:
 
 @pytest.mark.parametrize("name", lvxml.__all__)
 def test_every_public_name_has_a_docstring_with_an_example(name: str) -> None:
-    if name == "LVDATA_NAMESPACE":
-        assert "lvxml.LVDATA_NAMESPACE" in (lvxml.__doc__ or "")
+    if name in {"LVDATA_NAMESPACE", "Schema", "Value"}:
+        assert f"lvxml.{name}" in (lvxml.__doc__ or "")
         return
     assert ">>>" in (getattr(lvxml, name).__doc__ or ""), name
 

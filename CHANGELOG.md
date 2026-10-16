@@ -8,7 +8,7 @@ All notable changes to this project are documented here. The format follows
 
 ## [1.0.0] - 2026-10-16
 
-The public API is now stable: the fifteen names in `lvxml.__all__`, their parameters and
+The public API is now stable: the seventeen names in `lvxml.__all__`, their parameters and
 defaults, the error types and the command line. Every rule below was checked against what
 LabVIEW 2026 writes and reads (see the guide, "What each rule rests on").
 
@@ -20,22 +20,27 @@ LabVIEW 2026 writes and reads (see the guide, "What each rule rests on").
 - `Boolean` text is unsigned digits, `0` false and any other number true; `true` and
   `false` raise.
 - `Infinity` in any spelling raises, as LabVIEW refuses it.
-- A refnum's `RefKind` and `RefType` are read before or after `<Val>` and written before it,
-  where LabVIEW 2026 puts them.
+- A refnum's `RefKind` and `RefType` are read together, `RefKind` first, before or after
+  `<Val>`, and written before it, where LabVIEW 2026 puts them.
 - Bytes that are not UTF-8 raise with a hint that LabVIEW writes the system code page;
-  `bytearray` and `memoryview` are read.
+  `bytearray` and `memoryview` are read; an encoding the declaration names that Python
+  lacks raises `LVXMLError` with a short message.
 - `Array`, `Cluster` and `LVEnum` check their contents when built (`ValueError` for an
-  unknown tag, `TypeError` for a wrong type); a non-integer `ndim` raises `TypeError`.
+  unknown tag, `TypeError` for a wrong type); a non-integer `ndim` raises `TypeError`;
+  `Cluster` copies its fields into a new dict.
 - `Node` and `Document` check their field types when built and store lists as tuples.
-- `dump` takes only CRLF, LF or CR as `newline` and spaces and tabs as `indent`.
-- Error messages quote at most 40 characters of a value and stay bounded; errors pickle
-  with their message and path.
+- `dump` takes only CRLF, LF or CR as `newline` and spaces and tabs as `indent`; `dump` and
+  `to_value` raise `TypeError` for anything but a tree.
+- Error messages quote at most 40 characters of a value and stay bounded, and some wording
+  changed (`unknown scalar tag`, `cannot decode byte N as utf-8`); errors pickle with their
+  message and path; every public class reports the module `lvxml`.
 - The command line exits with status 2 for usage mistakes, reads `to-xml` JSON as UTF-8,
   bounds and escapes its problem lines and ends quietly on a closed pipe; `main` returns 0
   for `--help` and `--version`.
 
 ### Added
 
+- `lvxml.Schema` and `lvxml.Value`, the schema and value types for annotations.
 - `GUIDE.md`, with an upgrade list from 0.2.
 - Ground truth from LabVIEW 2026: files it wrote and values it read back, with the scripts
   that capture them.

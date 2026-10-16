@@ -60,6 +60,8 @@ def to_value(node: Node) -> Value:
     >>> to_value(Node("EW", "mode", val="1", choices=("Idle", "Run")))
     'Run'
     """
+    if not isinstance(node, Node):
+        raise TypeError(f"to_value takes a Node, not {type(node).__name__}")
     check_shape(node, "")
     try:
         return _value(node, "")

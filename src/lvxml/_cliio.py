@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import errno
 import math
 import sys
 from typing import TextIO
@@ -35,7 +36,7 @@ def read(path: str, encoding: str) -> str:
     try:
         return data.decode(encoding)
     except UnicodeDecodeError as exc:
-        where = "stdin" if path == "-" else "the file"
+        where = "stdin" if path == "-" else path
         raise LVXMLError(
             f"{where} is not valid {encoding} ({exc.reason}); try --encoding"
         ) from None
@@ -51,8 +52,14 @@ def write(text: str, output: str | None, encoding: str) -> None:
         with open(output, "wb") as handle:
             handle.write(data)
     elif sys.stdout is not None:
-        sys.stdout.buffer.write(data)
-        sys.stdout.buffer.flush()
+        try:
+            sys.stdout.buffer.write(data)
+            sys.stdout.buffer.flush()
+        except OSError as exc:
+            # Windows reports a reader that went away as EINVAL rather than a broken pipe.
+            if isinstance(exc, BrokenPipeError) or exc.errno == errno.EINVAL:
+                raise BrokenPipeError(errno.EPIPE, "the reader closed the pipe") from None
+            raise
 
 
 def plain(value: object) -> object:

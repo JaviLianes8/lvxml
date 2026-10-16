@@ -141,6 +141,10 @@ class LVEnum:
             raise ValueError(f"too many choices for {self.tag}")
 
 
+for _public in (Array, Cluster, LVEnum):
+    _public.__module__ = "lvxml"
+
+
 def check_schema(schema: object) -> None:
     """Raise unless `schema` is a scalar tag string or a built schema object."""
     if isinstance(schema, (Array, Cluster, LVEnum)):
