@@ -185,7 +185,7 @@ LabVIEW 2026 reads an enum index past the last choice as the last choice; `lvxml
 | --- | --- |
 | `LVXMLError` (a `ValueError`) | malformed XML, a shape the schema does not allow, a value that does not parse or fit, a tree `dump` or `to_value` cannot write, bytes that do not decode |
 | `ValueError` | a schema object that cannot exist (`LVEnum(())`, `Array("FXP")`), a `newline` or `indent` `dump` does not write |
-| `TypeError` | input that is not `str` or bytes-like, a `dump` or `to_value` argument that is not a tree, a schema that is not a tag or schema object, a `Node` or `Document` field of the wrong type |
+| `TypeError` | input that is not `str` or bytes-like, a `dump` argument that is not a `Document` or `Node`, a `to_value` argument that is not a `Node`, a schema that is not a tag or schema object, a `Node` or `Document` field of the wrong type |
 
 `LVXMLError.path` locates the element, such as `LVData/Cluster[pt]/DBL[x]`, and
 `LVXMLError.message` says what is wrong. Values quoted in messages are cut to 40 characters
@@ -264,8 +264,9 @@ Every behaviour change in 1.0.0, also listed in the changelog:
    `ndim` raises `TypeError` (was `ValueError`); `Cluster` copies its fields into a new dict.
 8. `Node` and `Document` check their field types when built (`TypeError`) and store lists as
    tuples.
-9. `dump` takes only CRLF, LF or CR as `newline` and spaces and tabs as `indent`; `dump` and
-   `to_value` raise `TypeError` for anything but a tree (0.2 raised `AttributeError`).
+9. `dump` takes only CRLF, LF or CR as `newline` and spaces and tabs as `indent`; `dump`
+   raises `TypeError` for anything but a `Document` or `Node`, `to_value` for anything but a
+   `Node` (0.2 raised `AttributeError`).
 10. Messages quote at most 40 characters of a value and stay bounded; some wording changed
     (`unknown scalar tag`, `cannot decode byte N as utf-8`, `unknown encoding` for a declared
     encoding Python lacks). Errors pickle with their message and path, and every public class

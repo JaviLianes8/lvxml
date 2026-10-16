@@ -29,8 +29,9 @@ LabVIEW 2026 writes and reads (see the guide, "What each rule rests on").
   unknown tag, `TypeError` for a wrong type); a non-integer `ndim` raises `TypeError`;
   `Cluster` copies its fields into a new dict.
 - `Node` and `Document` check their field types when built and store lists as tuples.
-- `dump` takes only CRLF, LF or CR as `newline` and spaces and tabs as `indent`; `dump` and
-  `to_value` raise `TypeError` for anything but a tree.
+- `dump` takes only CRLF, LF or CR as `newline` and spaces and tabs as `indent`; `dump`
+  raises `TypeError` for anything but a `Document` or `Node`, `to_value` for anything but a
+  `Node`.
 - Error messages quote at most 40 characters of a value and stay bounded, and some wording
   changed (`unknown scalar tag`, `cannot decode byte N as utf-8`); errors pickle with their
   message and path; every public class reports the module `lvxml`.
