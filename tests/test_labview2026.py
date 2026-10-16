@@ -76,7 +76,7 @@ def test_labview_writes_the_system_code_page_not_utf8() -> None:
     assert b"caf\xe9 \x805" in raw and b"encoding" not in raw
     with pytest.raises(LVXMLError, match="system code page"):
         parse(raw)
-    assert "café €5" in str(from_lv_xml(raw.decode("cp1252")))
+    assert "caf\u00e9 \u20ac5" in str(from_lv_xml(raw.decode("cp1252")))
 
 
 def test_labview_writes_control_characters_raw_and_lvxml_reads_them() -> None:

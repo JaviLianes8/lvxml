@@ -87,7 +87,7 @@ def test_unwritable_text_is_an_lvxml_error() -> None:
 def test_cli_reports_unencodable_output(tmp_path: Path, capsys: pytest.CaptureFixture[str]) -> None:
     tree = tmp_path / "t.json"
     tree.write_text(
-        json.dumps({"wrapped": False, "items": [{"tag": "String", "name": "s", "val": "日"}]}),
+        json.dumps({"wrapped": False, "items": [{"tag": "String", "name": "s", "val": "\u65e5"}]}),
         encoding="utf-8",
     )
     assert main(["to-xml", "--encoding", "cp1252", str(tree)]) == 1
